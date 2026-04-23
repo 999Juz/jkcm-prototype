@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Justin Keane Chinese Medicine — Platform Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+
+/* ─────────────────────────────────────────
+   RESET & BASE
+───────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream:      #FAF5ED;
+  --cream-dark: #F2E9D8;
+  --terra:      #C1673A;
+  --terra-dark: #A3522B;
+  --brown:      #3D2B1F;
+  --brown-mid:  #7A5C45;
+  --brown-lt:   #A07850;
+  --muted:      #8B6E54;
+  --border:     rgba(161,120,80,0.2);
+  --green:      #4A7C59;
+  --green-bg:   #F0F7F2;
+  --amber:      #A07020;
+  --amber-bg:   #FDF5E6;
+  --white:      #FFFFFF;
+  --serif:      'Cormorant Garamond', serif;
+  --sans:       'DM Sans', sans-serif;
+}
+
+html, body {
+  font-family: var(--sans);
+  background: #E8E0D4;
+  color: var(--brown);
+  font-size: 16px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+button { font-family: var(--sans); cursor: pointer; }
+p, h1, h2, h3 { margin: 0; }
+
+/* ─────────────────────────────────────────
+   APP SHELL — phone frame on desktop
+───────────────────────────────────────── */
+.app-shell {
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px 20px;
+  min-height: 100vh;
+}
+
+.phone {
+  width: 390px;
+  background: var(--cream);
+  border-radius: 40px;
+  overflow: hidden;
+  box-shadow: 0 40px 80px rgba(61,43,31,0.22);
+  border: 1px solid rgba(161,120,80,0.15);
+  position: relative;
+  padding-bottom: 72px;
+}
+
+.notch {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cream);
+}
+
+.notch-bar {
+  width: 110px; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+}
+
+/* Prototype label */
+.proto-label {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(61,43,31,0.82);
+  color: var(--cream);
+  font-size: 11px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  letter-spacing: 0.04em;
+  z-index: 9999;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ─────────────────────────────────────────
+   SCREEN PANELS — only active one shown
+───────────────────────────────────────── */
+.screen { display: none; }
+.screen.active { display: block; animation: fadeUp 0.25s ease both; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─────────────────────────────────────────
+   BOTTOM NAV
+───────────────────────────────────────── */
+.bottom-nav {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(250,245,237,0.97);
+  backdrop-filter: blur(10px);
+  border-top: 0.5px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 0 14px;
+  z-index: 100;
+}
+
+.nav-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.nav-tab:hover { background: rgba(193,103,58,0.07); }
+
+.nav-tab .tab-icon {
+  font-size: 17px;
+  color: var(--brown-lt);
+  line-height: 1;
+}
+
+.nav-tab .tab-label {
+  font-size: 10px;
+  color: var(--brown-lt);
+  font-weight: 400;
+}
+
+.nav-tab.active .tab-icon,
+.nav-tab.active .tab-label {
+  color: var(--terra);
+  font-weight: 500;
+}
+
+/* ─────────────────────────────────────────
+   SHARED COMPONENTS
+───────────────────────────────────────── */
+nav.topnav {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(250,245,237,0.96);
+  backdrop-filter: blur(8px);
+  border-bottom: 0.5px solid var(--border);
+  padding: 13px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand { line-height: 1.2; }
+.brand-name { font-family: var(--serif); font-size: 17px; font-weight: 500; color: var(--brown); }
+.brand-sub  { font-size: 10px; font-weight: 300; color: var(--brown-lt); letter-spacing: 0.06em; text-transform: uppercase; }
+
+.topnav-links { display: flex; gap: 18px; }
+.topnav-links button {
+  background: none; border: none;
+  font-size: 12px; color: var(--brown-mid);
+  padding: 0;
+}
+.topnav-links button.active-link { color: var(--terra); font-weight: 500; }
+
+.back-btn {
+  background: none; border: none;
+  font-size: 13px; color: var(--terra); padding: 0;
+}
+
+.save-btn {
+  background: none; border: none;
+  font-size: 11px; color: var(--muted); padding: 0;
+}
+
+.progress-wrap { padding: 14px 24px 0; }
+.progress-row  { display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 11px; color: var(--brown-lt); }
+.progress-track { height: 3px; background: var(--cream-dark); border-radius: 2px; overflow: hidden; }
+.progress-fill  { height: 100%; background: var(--terra); border-radius: 2px; transition: width 0.4s; }
+
+.section { padding: 32px 24px; }
+.section-label { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--brown-lt); margin-bottom: 18px; }
+.divider { border: none; border-top: 0.5px solid var(--border); }
+
+.tag {
+  display: inline-block;
+  background: var(--cream-dark);
+  color: var(--brown-mid);
+  border: 0.5px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 13px;
+  font-size: 12px;
+}
+
+.tag-terra {
+  background: rgba(193,103,58,0.1);
+  color: var(--terra);
+  border: none;
+}
+
+.btn-primary {
+  display: block; width: 100%;
+  background: var(--terra); color: #fff;
+  font-size: 14px; font-weight: 500;
+  padding: 15px; border: none;
+  border-radius: 40px;
+  letter-spacing: 0.02em;
+  transition: background 0.2s;
+}
+.btn-primary:hover { background: var(--terra-dark); }
+
+.btn-outline {
+  display: inline-block;
+  border: 1.5px solid var(--terra); color: var(--terra);
+  background: transparent;
+  font-size: 13px; font-weight: 500;
+  padding: 11px 26px; border-radius: 40px;
+  transition: all 0.2s;
+}
+.btn-outline:hover { background: var(--terra); color: #fff; }
+
+.btn-disabled {
+  display: block; width: 100%;
+  background: var(--cream-dark); color: var(--brown-lt);
+  font-size: 14px; font-weight: 500;
+  padding: 15px; border: none;
+  border-radius: 40px; opacity: 0.55;
+  cursor: default;
+}
+
+/* ─────────────────────────────────────────
+   HOME SCREEN
+───────────────────────────────────────── */
+.hero {
+  background: var(--cream-dark);
+  padding: 44px 24px 36px;
+  text-align: center;
+}
+.hero h1 {
+  font-family: var(--serif);
+  font-size: 36px; font-weight: 400;
+  line-height: 1.2; margin: 14px 0 14px;
+  color: var(--brown);
+}
+.hero h1 em { font-style: italic; color: var(--terra); }
+.hero p { font-size: 14px; color: var(--brown-mid); font-weight: 300; line-height: 1.8; margin-bottom: 28px; }
+.hero-sub { font-size: 12px; color: var(--muted); margin-top: 10px; }
+
+.steps-list { display: flex; flex-direction: column; gap: 22px; }
+.step { display: flex; gap: 14px; align-items: flex-start; }
+.step-num {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--cream-dark); border: 0.5px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--serif); font-size: 15px; color: var(--terra);
+}
+.step-title { font-size: 14px; font-weight: 500; color: var(--brown); margin-bottom: 3px; }
+.step-desc  { font-size: 13px; color: var(--brown-mid); font-weight: 300; line-height: 1.7; }
+
+.practitioner-section { background: #FDFAF5; }
+.prac-card { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
+.avatar {
+  width: 58px; height: 58px; border-radius: 50%;
+  background: var(--cream-dark); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--serif); font-size: 20px; color: var(--brown-mid);
+}
+.prac-name  { font-family: var(--serif); font-size: 20px; font-weight: 400; color: var(--brown); margin-bottom: 2px; }
+.prac-title { font-size: 12px; color: var(--brown-mid); font-weight: 300; line-height: 1.5; margin-bottom: 3px; }
+.prac-ahpra { font-size: 11px; color: var(--brown-lt); }
+.prac-bio   { font-size: 13px; color: var(--brown-mid); font-weight: 300; line-height: 1.8; }
+
+.tags-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.home-cta { background: var(--cream-dark); padding: 44px 24px; text-align: center; border-top: 0.5px solid var(--border); }
+.home-cta h2 { font-family: var(--serif); font-size: 24px; font-weight: 400; color: var(--brown); margin-bottom: 8px; line-height: 1.3; }
+.home-cta p  { font-size: 13px; color: var(--brown-mid); font-weight: 300; margin-bottom: 22px; }
+
+.disclaimer { padding: 18px 24px; text-align: center; border-top: 0.5px solid var(--border); }
+.disclaimer p { font-size: 11px; color: var(--muted); line-height: 1.7; font-weight: 300; }
+
+/* ─────────────────────────────────────────
+   LEARN SCREEN
+───────────────────────────────────────── */
+.learn-hero { background: var(--cream-dark); padding: 36px 24px 30px; border-bottom: 0.5px solid var(--border); }
+.learn-hero h1 { font-family: var(--serif); font-size: 28px; font-weight: 400; line-height: 1.2; color: var(--brown); margin: 12px 0 10px; }
+.learn-hero h1 em { font-style: italic; color: var(--terra); }
+.learn-hero p { font-size: 13px; color: var(--brown-mid); font-weight: 300; line-height: 1.8; }
+
+.contents-list { display: flex; flex-direction: column; }
+.contents-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 0; border-bottom: 0.5px solid var(--border);
+  background: none; border-top: none; border-left: none; border-right: none;
+  text-align: left; width: 100%;
+  font-size: 13px; color: var(--brown); cursor: pointer;
+}
+.contents-arrow { color: var(--terra); font-size: 13px; }
+
+.article-section { padding: 32px 24px; }
+.sec-num  { font-family: var(--serif); font-size: 13px; color: var(--terra); margin-bottom: 5px; }
+.sec-title { font-family: var(--serif); font-size: 22px; font-weight: 400; color: var(--brown); line-height: 1.25; margin-bottom: 16px; }
+.sec-title em { font-style: italic; color: var(--terra); }
+.body-text { font-size: 14px; color: var(--brown-mid); font-weight: 300; line-height: 1.85; margin-bottom: 14px; }
+
+.comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0; }
+.comp-col { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.comp-head-w { padding: 9px 13px; background: #F0F0F0; font-size: 11px; font-weight: 500; color: var(--brown-mid); text-transform: uppercase; letter-spacing: 0.05em; }
+.comp-head-e { padding: 9px 13px; background: rgba(193,103,58,0.1); font-size: 11px; font-weight: 500; color: var(--terra); text-transform: uppercase; letter-spacing: 0.05em; }
+.comp-body   { padding: 11px 13px; background: #fff; font-size: 12px; color: var(--brown-mid); font-weight: 300; line-height: 1.7; }
+
+.pull-quote {
+  border-left: 2px solid var(--terra);
+  padding: 14px 16px; margin: 20px 0;
+  background: rgba(193,103,58,0.05);
+  border-radius: 0 8px 8px 0;
+}
+.pull-quote p    { font-family: var(--serif); font-size: 16px; font-style: italic; color: var(--brown); line-height: 1.5; }
+.pull-quote cite { display: block; font-size: 11px; color: var(--brown-lt); margin-top: 6px; letter-spacing: 0.04em; }
+
+.substance-list { display: flex; flex-direction: column; gap: 10px; margin: 18px 0; }
+.substance-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 15px 17px; }
+.substance-head { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.sdot { width: 6px; height: 6px; border-radius: 50%; background: var(--terra); flex-shrink: 0; display: inline-block; }
+.substance-name { font-size: 13px; font-weight: 500; color: var(--brown); }
+.substance-body { font-size: 12px; color: var(--brown-mid); font-weight: 300; line-height: 1.7; padding-left: 14px; }
+
+.herbal-highlight { background: var(--cream-dark); border-radius: 12px; padding: 18px; margin: 18px 0; border: 1px solid var(--border); }
+.herbal-title { font-family: var(--serif); font-size: 16px; font-weight: 400; color: var(--brown); margin-bottom: 8px; }
+.herbal-body  { font-size: 13px; color: var(--brown-mid); font-weight: 300; line-height: 1.8; }
+
+.faq-section { padding: 32px 24px; background: #FDFAF6; }
+.faq-title   { font-family: var(--serif); font-size: 22px; font-weight: 400; color: var(--brown); margin-bottom: 20px; }
+.faq-item    { border-bottom: 0.5px solid var(--border); }
+.faq-btn {
+  width: 100%; background: none; border: none;
+  padding: 14px 0; text-align: left;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+  font-size: 13px; font-weight: 500; color: var(--brown); line-height: 1.5;
+}
+.faq-icon { font-size: 20px; color: var(--terra); font-weight: 300; flex-shrink: 0; transition: transform 0.2s; line-height: 1; }
+.faq-item.open .faq-icon { transform: rotate(45deg); }
+.faq-answer { display: none; padding-bottom: 14px; font-size: 13px; color: var(--brown-mid); font-weight: 300; line-height: 1.8; }
+.faq-item.open .faq-answer { display: block; }
+
+.learn-cta { padding: 40px 24px; background: var(--cream-dark); border-top: 0.5px solid var(--border); text-align: center; }
+.learn-cta h2 { font-family: var(--serif); font-size: 22px; font-weight: 400; color: var(--brown); margin-bottom: 8px; }
+.learn-cta p  { font-size: 13px; color: var(--brown-mid); font-weight: 300; margin-bottom: 22px; line-height: 1.7; }
+
+/* ─────────────────────────────────────────
+   QUESTIONNAIRE SCREEN
+───────────────────────────────────────── */
+.q-step { display: none; padding: 32px 24px 44px; animation: fadeUp 0.25s ease both; }
+.q-step.active { display: block; }
+
+.q-num    { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--terra); margin-bottom: 10px; }
+.q-text   { font-family: var(--serif); font-size: 25px; font-weight: 400; line-height: 1.25; color: var(--brown); margin-bottom: 7px; }
+.q-sub    { font-size: 13px; color: var(--brown-mid); font-weight: 300; line-height: 1.6; margin-bottom: 6px; }
+.q-multi  { font-size: 11px; color: var(--muted); font-weight: 300; margin-bottom: 20px; }
+
+.options  { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+.opt-btn  {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 15px 17px; border: 1px solid var(--border);
+  border-radius: 12px; background: #fff; cursor: pointer;
+  text-align: left; width: 100%;
+  transition: all 0.16s;
+}
+.opt-btn:hover, .opt-btn.selected { border-color: var(--terra); background: #FDF0E8; }
+.opt-label { font-size: 14px; font-weight: 400; color: var(--brown); margin-bottom: 2px; }
+.opt-sub   { font-size: 12px; color: var(--brown-mid); font-weight: 300; }
+.opt-radio {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1.5px solid var(--border); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.16s;
+}
+.opt-btn.selected .opt-radio { background: var(--terra); border-color: var(--terra); }
+.opt-radio-inner { width: 8px; height: 8px; border-radius: 50%; background: #fff; display: none; }
+.opt-btn.selected .opt-radio-inner { display: block; }
+
+.opt-check {
+  width: 22px; height: 22px; border-radius: 6px;
+  border: 1.5px solid var(--border); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: #fff;
+  transition: all 0.16s;
+}
+.opt-btn.selected .opt-check { background: var(--green); border-color: var(--green); }
+
+.complexity-note {
+  background: var(--amber-bg); border: 1px solid rgba(160,112,32,0.2);
+  border-radius: 12px; padding: 11px 14px; margin-bottom: 14px;
+  font-size: 12px; color: var(--amber); line-height: 1.6;
+}
+
+.redirect-card {
+  background: #FDF8F2; border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px 20px; text-align: center;
+}
+.redirect-icon  { font-size: 34px; margin-bottom: 14px; }
+.redirect-title { font-family: var(--serif); font-size: 21px; font-weight: 400; color: var(--brown); margin-bottom: 10px; line-height: 1.3; }
+.redirect-body  { font-size: 13px; color: var(--brown-mid); font-weight: 300; line-height: 1.7; margin-bottom: 22px; }
+.redirect-back  { display: block; background: none; border: none; font-size: 12px; color: var(--brown-lt); margin-top: 12px; cursor: pointer; }
+
+.result-badge { display: inline-block; background: var(--cream-dark); border: 1px solid var(--border); color: var(--brown-lt); font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; padding: 5px 13px; border-radius: 20px; margin-bottom: 14px; }
+.result-title { font-family: var(--serif); font-size: 28px; font-weight: 400; color: var(--brown); margin-bottom: 10px; line-height: 1.2; }
+.result-title em { font-style: italic; color: var(--terra); }
+.result-body  { font-size: 14px; color: var(--brown-mid); font-weight: 300; line-height: 1.8; margin-bottom: 22px; }
+.result-card  { background: #fff; border: 1px solid var(--border); border-radius: 13px; padding: 17px; margin-bottom: 22px; }
+.result-card-label { font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brown-lt); margin-bottom: 11px; }
+.result-row   { display: flex; align-items: center; gap: 9px; padding: 6px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; color: var(--brown); }
+.result-row:last-child { border-bottom: none; }
+.rdot { width: 6px; height: 6px; border-radius: 50%; background: var(--terra); flex-shrink: 0; display: inline-block; }
+.proceed-sub { text-align: center; font-size: 11px; color: var(--muted); margin-top: 9px; font-weight: 300; }
+
+/* ─────────────────────────────────────────
+   TONGUE PHOTO SCREEN
+───────────────────────────────────────── */
+.step-tag { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--terra); margin-bottom: 10px; }
+.screen-headline { font-family: var(--serif); font-size: 26px; font-weight: 400; line-height: 1.2; color: var(--brown); margin-bottom: 8px; }
+.screen-headline em { font-style: italic; color: var(--terra); }
+.screen-sub { font-size: 13px; color: var(--brown-mid); font-weight: 300; line-height: 1.7; margin-bottom: 24px; }
+
+.checklist { border: 1px solid var(--border); border-radius: 13px; overflow: hidden; margin-bottom: 18px; }
+.check-item {
+  display: flex; align-items: flex-start; gap: 13px;
+  padding: 15px 17px; border-bottom: 0.5px solid var(--border);
+  background: #fff; cursor: pointer; width: 100%;
+  border-top: none; border-left: none; border-right: none;
+  text-align: left; transition: background 0.15s;
+}
+.check-item:last-child { border-bottom: none; }
+.check-item.checked { background: var(--green-bg); }
+.checkbox {
+  width: 22px; height: 22px; border-radius: 6px;
+  border: 1.5px solid var(--border); flex-shrink: 0; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: #fff; transition: all 0.16s;
+}
+.check-item.checked .checkbox { background: var(--green); border-color: var(--green); }
+.check-title { font-size: 14px; font-weight: 500; color: var(--brown); margin-bottom: 2px; line-height: 1.4; }
+.check-item.checked .check-title { color: var(--green); }
+.check-desc  { font-size: 12px; color: var(--brown-mid); font-weight: 300; line-height: 1.5; }
+
+.amber-note {
+  background: var(--amber-bg); border: 1px solid rgba(160,112,32,0.2);
+  border-radius: 12px; padding: 13px 15px;
+  display: flex; gap: 11px; align-items: flex-start; margin-bottom: 18px;
+}
+.amber-icon { font-size: 15px; color: var(--amber); flex-shrink: 0; margin-top: 1px; }
+.amber-text { font-size: 12px; color: var(--amber); font-weight: 400; line-height: 1.6; }
+
+.example-block { border: 1px solid var(--border); border-radius: 13px; overflow: hidden; margin-bottom: 18px; }
+.example-head  { padding: 11px 15px; background: var(--cream-dark); border-bottom: 0.5px solid var(--border); font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--brown-lt); }
+.example-img   { background: #F8F0E8; }
+.tongue-svg    { width: 100%; height: auto; display: block; }
+.example-cap   { padding: 11px 15px; background: #fff; }
+.example-cap p { font-size: 12px; color: var(--brown-mid); font-weight: 300; margin-bottom: 8px; }
+.cap-row       { display: flex; gap: 12px; flex-wrap: wrap; }
+.cap-item      { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.cap-dot       { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+
+.upload-area {
+  border: 1.5px dashed rgba(193,103,58,0.4);
+  border-radius: 13px; background: #FDFAF6;
+  padding: 30px 20px; text-align: center;
+  cursor: pointer; margin-bottom: 10px; transition: all 0.2s;
+}
+.upload-area.uploaded { border-style: solid; border-color: var(--green); background: var(--green-bg); }
+.upload-icon-wrap {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: var(--cream-dark); display: flex; align-items: center;
+  justify-content: center; margin: 0 auto 10px; font-size: 20px;
+}
+.upload-area.uploaded .upload-icon-wrap { background: rgba(74,124,89,0.15); }
+.upload-title { font-size: 14px; font-weight: 500; color: var(--brown); margin-bottom: 3px; }
+.upload-area.uploaded .upload-title { color: var(--green); }
+.upload-sub   { font-size: 12px; color: var(--brown-mid); font-weight: 300; }
+.retake-link  { display: none; text-align: center; font-size: 12px; color: var(--terra); background: none; border: none; margin-bottom: 18px; cursor: pointer; }
+.privacy-note { text-align: center; font-size: 11px; color: var(--muted); margin-top: 9px; font-weight: 300; }
+
+/* ─────────────────────────────────────────
+   BOOKING SCREEN
+───────────────────────────────────────── */
+.booking-step { display: none; padding: 26px 24px 44px; animation: fadeUp 0.25s ease both; }
+.booking-step.active { display: block; }
+
+.prac-summary {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 13px; padding: 15px 17px; margin-bottom: 18px;
+  display: flex; gap: 13px; align-items: center;
+}
+.sum-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--cream-dark); border: 0.5px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: var(--serif); font-size: 15px; color: var(--brown-mid); }
+.sum-info { flex: 1; }
+.sum-name   { font-size: 14px; font-weight: 500; color: var(--brown); margin-bottom: 2px; }
+.sum-detail { font-size: 12px; color: var(--brown-mid); font-weight: 300; }
+.sum-price  { font-size: 15px; font-weight: 500; color: var(--brown); text-align: right; }
+.sum-price-sub { font-size: 11px; color: var(--muted); font-weight: 300; }
+
+.month-nav  { display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px; }
+.month-btn  { width: 30px; height: 30px; border-radius: 50%; border: 0.5px solid var(--border); background: #fff; font-size: 13px; color: var(--brown-mid); display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.month-btn:disabled { opacity: 0.3; cursor: default; }
+.month-title { font-family: var(--serif); font-size: 17px; font-weight: 400; color: var(--brown); }
+
+.calendar { background: #fff; border: 1px solid var(--border); border-radius: 13px; overflow: hidden; margin-bottom: 14px; }
+.cal-header { display: grid; grid-template-columns: repeat(7,1fr); border-bottom: 0.5px solid var(--border); }
+.cal-day-label { text-align: center; padding: 9px 2px; font-size: 11px; font-weight: 500; color: var(--brown-lt); }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); padding: 4px; gap: 2px; }
+.cal-cell {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--brown); border-radius: 50%;
+  position: relative; flex-direction: column;
+}
+.cal-cell button {
+  width: 100%; height: 100%; border-radius: 50%;
+  border: none; background: none; font-size: 12px;
+  color: var(--brown); font-family: var(--sans);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 1px; transition: all 0.13s;
+}
+.cal-cell.available button:hover { background: #FDF0E8; color: var(--terra); }
+.cal-cell.past button   { color: rgba(161,120,80,0.3); cursor: default; }
+.cal-cell.unavail button { color: rgba(161,120,80,0.25); cursor: default; text-decoration: line-through; }
+.cal-cell.selected button { background: var(--terra); color: #fff; }
+.avail-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--terra); display: block; }
+.cal-cell.selected .avail-dot { background: rgba(255,255,255,0.6); }
+
+.slots-section { margin-bottom: 18px; }
+.slots-label   { font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--brown-lt); margin-bottom: 11px; }
+.slots-grid    { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.slot-btn {
+  padding: 11px 6px; border: 1px solid var(--border);
+  border-radius: 10px; text-align: center; font-size: 13px;
+  color: var(--brown); background: #fff; transition: all 0.14s;
+}
+.slot-btn:hover, .slot-btn.selected { background: var(--terra); border-color: var(--terra); color: #fff; font-weight: 500; }
+
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--brown-lt); margin-bottom: 5px; display: block; }
+.form-input {
+  width: 100%; padding: 12px 15px;
+  border: 1px solid var(--border); border-radius: 10px;
+  font-family: var(--sans); font-size: 14px; font-weight: 300;
+  color: var(--brown); background: #fff; outline: none;
+  -webkit-appearance: none; appearance: none;
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.order-summary { background: var(--cream-dark); border-radius: 12px; padding: 15px 17px; margin-bottom: 18px; }
+.order-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--brown-mid); padding: 4px 0; font-weight: 300; }
+.order-total { border-top: 0.5px solid var(--border); margin-top: 7px; padding-top: 11px; font-weight: 500; color: var(--brown); font-size: 15px; }
+
+.pay-card { background: #fff; border: 1px solid var(--border); border-radius: 13px; overflow: hidden; margin-bottom: 18px; }
+.pay-head  { padding: 13px 17px; background: var(--cream-dark); border-bottom: 0.5px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.pay-head-label { font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--brown-lt); }
+.secure-label { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--green); }
+.pay-body { padding: 17px; }
+.card-field { border: 1px solid var(--border); border-radius: 10px; padding: 12px 15px; margin-bottom: 9px; background: #FAFAF8; font-size: 13px; color: var(--muted); font-weight: 300; }
+.card-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.stripe-note { font-size: 11px; color: var(--muted); margin-top: 11px; font-weight: 300; }
+.pay-note   { text-align: center; font-size: 11px; color: var(--muted); margin-top: 9px; font-weight: 300; }
+
+.confirm-icon-wrap { width: 62px; height: 62px; border-radius: 50%; background: rgba(74,124,89,0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; font-size: 26px; color: var(--green); }
+.confirm-title { font-family: var(--serif); font-size: 28px; font-weight: 400; color: var(--brown); margin-bottom: 10px; line-height: 1.25; text-align: center; }
+.confirm-title em { font-style: italic; color: var(--green); }
+.confirm-body  { font-size: 13px; color: var(--brown-mid); font-weight: 300; line-height: 1.8; margin-bottom: 24px; text-align: center; }
+.confirm-details { background: #fff; border: 1px solid var(--border); border-radius: 13px; padding: 17px; margin-bottom: 18px; }
+.confirm-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+.confirm-row:last-child { border-bottom: none; }
+.confirm-label { color: var(--brown-lt); font-weight: 300; }
+.confirm-value { color: var(--brown); font-weight: 500; }
+.confirm-note  { background: var(--green-bg); border: 1px solid rgba(74,124,89,0.2); border-radius: 12px; padding: 13px 15px; margin-bottom: 22px; font-size: 12px; color: var(--green); line-height: 1.6; }
+
+@media (max-width: 480px) {
+  body { background: var(--cream); }
+  .app-shell { padding: 0; }
+  .phone { width: 100%; border-radius: 0; box-shadow: none; }
+  .notch { display: none; }
+  .proto-label { display: none; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="proto-label">● Interactive prototype — Justin Keane Chinese Medicine</div>
+
+<div class="app-shell">
+<div class="phone">
+  <div class="notch"><div class="notch-bar"></div></div>
+
+  <!-- ═══════════════════════════════════
+       HOME SCREEN
+  ═══════════════════════════════════ -->
+  <div class="screen active" id="screen-home">
+
+    <nav class="topnav">
+      <div class="brand">
+        <div class="brand-name">Justin Keane</div>
+        <div class="brand-sub">Chinese Medicine</div>
+      </div>
+      <div class="topnav-links">
+        <button onclick="goTo('learn')">About</button>
+        <button onclick="goTo('learn')">Learn</button>
+        <button onclick="goTo('questionnaire')" class="active-link">Begin</button>
+      </div>
+    </nav>
+
+    <div class="hero">
+      <span class="tag tag-terra">Women's hormonal health</span>
+      <h1>Finally, answers that <em>make sense</em> for your body.</h1>
+      <p>A short questionnaire, a brief phone call, and a herbal formula made for you — guided by 20 years of clinical experience in Chinese Medicine.</p>
+      <button class="btn-primary" onclick="goTo('questionnaire')">Begin questionnaire</button>
+      <p class="hero-sub">Takes about 5 minutes</p>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section">
+      <p class="section-label">How it works</p>
+      <div class="steps-list">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div>
+            <p class="step-title">Answer a few questions</p>
+            <p class="step-desc">Tell us about your health, your cycle and how you're feeling — in plain language, at your own pace.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div>
+            <p class="step-title">Book a short phone call</p>
+            <p class="step-desc">A 5–10 minute call with Dr Justin Keane to confirm your formula. No video required.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div>
+            <p class="step-title">Receive your formula</p>
+            <p class="step-desc">Your personalised herbal formula is prepared and posted directly to you.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section practitioner-section">
+      <p class="section-label">Your practitioner</p>
+      <div class="prac-card">
+        <div class="avatar">JK</div>
+        <div>
+          <p class="prac-name">Dr Justin Keane</p>
+          <p class="prac-title">Registered Acupuncturist & Chinese Herbal Medicine Practitioner</p>
+          <p class="prac-ahpra">AHPRA: CMR0001739870</p>
+        </div>
+      </div>
+      <p class="prac-bio">Twenty years of clinical practice in Chinese Medicine, specialising in women's hormonal health across every stage of life. Every formula issued through this platform is reviewed and prescribed by a registered practitioner following a real-time consultation.</p>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section">
+      <p class="section-label">Who this is for</p>
+      <div class="tags-wrap">
+        <span class="tag">Irregular cycles</span>
+        <span class="tag">Hormonal acne</span>
+        <span class="tag">PMS & mood changes</span>
+        <span class="tag">Perimenopause</span>
+        <span class="tag">Fatigue & brain fog</span>
+        <span class="tag">Sleep disruption</span>
+        <span class="tag">Post-viral symptoms</span>
+        <span class="tag">Menopause support</span>
+        <span class="tag">Low energy</span>
+        <span class="tag">Digestive issues</span>
+      </div>
+    </div>
+
+    <div class="home-cta">
+      <h2>Ready to find out what's going on?</h2>
+      <p>The questionnaire takes about 5 minutes.</p>
+      <button class="btn-primary" onclick="goTo('questionnaire')">Begin questionnaire</button>
+    </div>
+
+    <div class="disclaimer">
+      <p>This platform provides a triage and intake service only. All formulas are issued following a real-time phone consultation with a registered Chinese Medicine practitioner. This service does not replace medical advice.</p>
+    </div>
+
+  </div><!-- end home -->
+
+
+  <!-- ═══════════════════════════════════
+       LEARN SCREEN
+  ═══════════════════════════════════ -->
+  <div class="screen" id="screen-learn">
+
+    <nav class="topnav">
+      <div class="brand">
+        <div class="brand-name">Justin Keane</div>
+        <div class="brand-sub">Chinese Medicine</div>
+      </div>
+      <div class="topnav-links">
+        <button onclick="goTo('home')">Home</button>
+        <button class="active-link">Learn</button>
+        <button onclick="goTo('questionnaire')">Begin</button>
+      </div>
+    </nav>
+
+    <div class="learn-hero">
+      <span class="tag tag-terra">Understanding Chinese Medicine</span>
+      <h1>A system built on <em>thousands of years</em> of listening.</h1>
+      <p>Chinese Medicine doesn't treat symptoms — it treats you. Here's what that means, and why it works particularly well for women's hormonal health.</p>
+    </div>
+
+    <div class="section">
+      <p class="section-label">In this section</p>
+      <div class="contents-list">
+        <button class="contents-item" onclick="scrollToId('east-west')"><span class="contents-arrow">→</span> East meets West — a different way of seeing</button>
+        <button class="contents-item" onclick="scrollToId('how-it-works')"><span class="contents-arrow">→</span> How Chinese Medicine works</button>
+        <button class="contents-item" onclick="scrollToId('herbal')"><span class="contents-arrow">→</span> Herbal medicine and your hormones</button>
+        <button class="contents-item" onclick="scrollToId('history')"><span class="contents-arrow">→</span> A brief history</button>
+        <button class="contents-item" onclick="scrollToId('faq-section')"><span class="contents-arrow">→</span> Frequently asked questions</button>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="article-section" id="east-west">
+      <p class="sec-num">01</p>
+      <h2 class="sec-title">East meets West — <em>a different way of seeing</em></h2>
+      <p class="body-text">Western medicine and Chinese medicine ask fundamentally different questions. Western medicine asks: what disease is this, and how do we suppress it? Chinese medicine asks: why is this person's energy out of balance, and how do we help them restore it?</p>
+      <div class="comparison">
+        <div class="comp-col"><div class="comp-head-w">Western medicine</div><div class="comp-body">Treats the site of disease. Diagnoses by symptom. Seeks external causes: viruses, bacteria, deficiencies.</div></div>
+        <div class="comp-col"><div class="comp-head-e">Chinese medicine</div><div class="comp-body">Treats the energy behind disease. Diagnoses by pattern. Looks at the whole person, not the isolated symptom.</div></div>
+      </div>
+      <p class="body-text">The most memorable way to put it: the west fights the invader. The east strengthens the warrior.</p>
+      <div class="pull-quote">
+        <p>"When a number of people with similar symptoms see a Chinese medicine practitioner, they will likely receive totally different treatments. This is Chinese medicine treating the person, not the disease."</p>
+        <cite>— Dr Justin Keane</cite>
+      </div>
+      <p class="body-text">This is why Chinese medicine has served women so well across thousands of years. The female hormonal landscape is not uniform — it shifts across the reproductive years, perimenopause, menopause and beyond.</p>
+    </div>
+
+    <hr class="divider">
+
+    <div class="article-section" id="how-it-works">
+      <p class="sec-num">02</p>
+      <h2 class="sec-title">How Chinese Medicine <em>works</em></h2>
+      <p class="body-text">The aim of Chinese Medicine is to restore and maintain the natural order of your energy. Your body is always pursuing balance, working every day to achieve it. Pain and dysfunction are your body telling you where it is struggling.</p>
+      <div class="substance-list">
+        <div class="substance-card"><div class="substance-head"><span class="sdot"></span><p class="substance-name">Qi (Chi) — your vital energy</p></div><p class="substance-body">The force of life. When Qi stagnates — as it commonly does under stress or hormonal fluctuation — you feel irritable, tight, blocked.</p></div>
+        <div class="substance-card"><div class="substance-head"><span class="sdot"></span><p class="substance-name">Blood (Xue) — nourishment and grounding</p></div><p class="substance-body">Nourishes the body, anchors the mind and supports the menstrual cycle. Blood deficiency is one of the most common findings in women with fatigue and poor sleep.</p></div>
+        <div class="substance-card"><div class="substance-head"><span class="sdot"></span><p class="substance-name">Jing — your constitutional essence</p></div><p class="substance-body">Stored in the Kidneys, Jing governs development, reproduction and ageing. The shifts of perimenopause and menopause are understood as a natural transition in Jing.</p></div>
+        <div class="substance-card"><div class="substance-head"><span class="sdot"></span><p class="substance-name">Shen — the spirit and mind</p></div><p class="substance-body">Governs the mind, emotions and sleep. When Shen is disturbed — often by heat or deficiency — anxiety, insomnia and emotional volatility follow.</p></div>
+        <div class="substance-card"><div class="substance-head"><span class="sdot"></span><p class="substance-name">Yin and Yang</p></div><p class="substance-body">The fundamental duality. Yin is cooling and nourishing — Yang is warming and activating. The hormonal changes of menopause often reflect a decline in Kidney Yin.</p></div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="article-section" id="herbal">
+      <p class="sec-num">03</p>
+      <h2 class="sec-title">Herbal medicine <em>and your hormones</em></h2>
+      <p class="body-text">Nature provides. However hot, cold, damp, dry or stagnant we become, nature offers a substance that is appropriately cooling, heating, drying, nourishing or invigorating.</p>
+      <div class="herbal-highlight">
+        <p class="herbal-title">Why herbal medicine works well for hormonal health</p>
+        <p class="herbal-body">A formula prescribed in Chinese medicine is not a standardised product — it is a combination of substances chosen specifically for your pattern, your constitution and your stage of life. The formula can be adjusted as your pattern shifts.</p>
+      </div>
+      <p class="body-text">The tongue reflects the state of your internal environment — its colour, coating, shape and moisture all carry clinical information. A yellow coat suggests heat. A pale body suggests Blood deficiency. These findings guide the formula.</p>
+    </div>
+
+    <hr class="divider">
+
+    <div class="article-section" id="history">
+      <p class="sec-num">04</p>
+      <h2 class="sec-title">A <em>brief history</em></h2>
+      <p class="body-text">Chinese Medicine originated thousands of years ago. The early Chinese understood that life was best approached from a perspective of health, and the philosophy of preventative medicine became woven into the culture.</p>
+      <div class="pull-quote">
+        <p>"In nurturing life, the wise adapt to the changes of the four seasons, leading a life of equanimity, free from either over-joy or anger, adjusting Yin and Yang. In so doing, evils will rarely rise and long life obtained."</p>
+        <cite>— Chi Po, from the Huang Ti Nei Jing</cite>
+      </div>
+      <p class="body-text">From as early as 1700 BC, records of remedies were kept on shells and bones. The practice of acupuncture alone is conservatively estimated to be at least 2,500 years old.</p>
+    </div>
+
+    <hr class="divider">
+
+    <div class="faq-section" id="faq-section">
+      <p class="faq-title">Frequently asked questions</p>
+      <div class="faq-item"><button class="faq-btn" onclick="toggleFaq(this)"><span>Is this a real consultation with a qualified practitioner?</span><span class="faq-icon">+</span></button><div class="faq-answer">Yes. Every formula issued through this platform follows a real-time phone consultation with Dr Justin Keane — a registered Chinese Medicine practitioner (AHPRA: CMR0001739870) with 20 years of clinical experience. The questionnaire and tongue photo are intake tools, not a consultation.</div></div>
+      <div class="faq-item"><button class="faq-btn" onclick="toggleFaq(this)"><span>How is this different from buying herbal supplements online?</span><span class="faq-icon">+</span></button><div class="faq-answer">Significantly different. Your formula here is prescribed specifically for your pattern — determined through clinical assessment — and prepared to order. It is a prescription, not a product.</div></div>
+      <div class="faq-item"><button class="faq-btn" onclick="toggleFaq(this)"><span>What conditions can Chinese herbal medicine help with?</span><span class="faq-icon">+</span></button><div class="faq-answer">This platform focuses on women's hormonal health — irregular cycles, PMS, hormonal acne, perimenopausal symptoms, menopause support, fatigue, sleep disruption, mood changes and post-viral recovery.</div></div>
+      <div class="faq-item"><button class="faq-btn" onclick="toggleFaq(this)"><span>Can I use this alongside my current medications?</span><span class="faq-icon">+</span></button><div class="faq-answer">This is an important question Dr Keane will discuss with you on the phone consult. Please disclose all current medications in your intake notes before the call. Do not make any changes to prescribed medications without consulting your GP.</div></div>
+      <div class="faq-item"><button class="faq-btn" onclick="toggleFaq(this)"><span>How long before I notice a difference?</span><span class="faq-icon">+</span></button><div class="faq-answer">Acute presentations often respond within 2–4 weeks. Longstanding hormonal patterns typically require 2–3 months of consistent treatment. Dr Keane will give you a realistic timeframe on your consult call.</div></div>
+      <div class="faq-item"><button class="faq-btn" onclick="toggleFaq(this)"><span>Is my information kept private?</span><span class="faq-icon">+</span></button><div class="faq-answer">Yes. Your health information, questionnaire responses and tongue photo are handled in accordance with the Australian Privacy Act and are accessible only to Dr Keane. Your data is stored securely in Australia and is never shared with third parties.</div></div>
+    </div>
+
+    <div class="learn-cta">
+      <h2>Ready to find out what's going on?</h2>
+      <p>The questionnaire takes about 5 minutes. A short phone call with Dr Keane follows — then your formula is on its way.</p>
+      <button class="btn-primary" onclick="goTo('questionnaire')">Begin questionnaire</button>
+    </div>
+
+    <div class="disclaimer"><p>This platform provides a triage and intake service only. All formulas are issued following a real-time phone consultation with a registered Chinese Medicine practitioner. This service does not replace medical advice.</p></div>
+
+  </div><!-- end learn -->
+
+
+  <!-- ═══════════════════════════════════
+       QUESTIONNAIRE SCREEN
+  ═══════════════════════════════════ -->
+  <div class="screen" id="screen-questionnaire">
+
+    <nav class="topnav">
+      <button class="back-btn" onclick="qBack()">← Back</button>
+      <span style="font-family:var(--serif);font-size:15px;color:var(--brown-mid)">Justin Keane CM</span>
+      <button class="save-btn">Save & exit</button>
+    </nav>
+
+    <div class="progress-wrap">
+      <div class="progress-row"><span id="q-step-label">Step 1 of 6</span><span id="q-step-pct">17%</span></div>
+      <div class="progress-track"><div class="progress-fill" id="q-progress" style="width:17%"></div></div>
+    </div>
+
+    <!-- Step 1: Age -->
+    <div class="q-step active" id="qs-1">
+      <p class="q-num">Question 1</p>
+      <h2 class="q-text">How old are you?</h2>
+      <p class="q-sub">This helps us ask you the most relevant questions.</p>
+      <div class="options">
+        <button class="opt-btn" onclick="qSelectAge('18-34')"><div><p class="opt-label">18 – 34</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+        <button class="opt-btn" onclick="qSelectAge('35-50')"><div><p class="opt-label">35 – 50</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+        <button class="opt-btn" onclick="qSelectAge('51+')"><div><p class="opt-label">51 and over</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+        <button class="opt-btn" onclick="qSelectAge('under18')"><div><p class="opt-label">Under 18</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+      </div>
+    </div>
+
+    <!-- Redirect: Under 18 -->
+    <div class="q-step" id="qs-r18">
+      <div class="redirect-card">
+        <div class="redirect-icon">🌿</div>
+        <p class="redirect-title">This platform is for women aged 18 and over</p>
+        <p class="redirect-body">We're not able to serve patients under 18 through this platform. For younger patients, we recommend booking a full in-person consultation at our Heathmont clinic.</p>
+        <button class="btn-outline" onclick="window.open('https://www.heathmontchinesemedicine.com.au/bookings/')">Book a clinic appointment</button>
+        <button class="redirect-back" onclick="qGoStep('qs-1',1)">← Go back</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Cycle -->
+    <div class="q-step" id="qs-2">
+      <p class="q-num">Question 2</p>
+      <h2 class="q-text">How would you describe your cycle right now?</h2>
+      <p class="q-sub">Select the option that fits best.</p>
+      <div class="options">
+        <button class="opt-btn" onclick="qSelectSingle(this,'cycle','regular','qs-3',3)"><div><p class="opt-label">Regular</p><p class="opt-sub">Arrives roughly on schedule</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+        <button class="opt-btn" onclick="qSelectSingle(this,'cycle','irregular','qs-3',3)"><div><p class="opt-label">Irregular</p><p class="opt-sub">Unpredictable timing, heavy or light</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+        <button class="opt-btn" onclick="qSelectSingle(this,'cycle','perimenopause','qs-3',3)"><div><p class="opt-label">Changing or stopping</p><p class="opt-sub">Becoming less frequent or unpredictable</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+        <button class="opt-btn" onclick="qSelectSingle(this,'cycle','stopped','qs-3',3)"><div><p class="opt-label">No longer have periods</p><p class="opt-sub">Post-menopause</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+        <button class="opt-btn" onclick="qSelectSingle(this,'cycle','contraception','qs-3',3)"><div><p class="opt-label">On hormonal contraception</p><p class="opt-sub">Pill, IUD, implant or injection</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+        <button class="opt-btn" onclick="qSelectPregnant(this)"><div><p class="opt-label">Pregnant or recently given birth</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+      </div>
+    </div>
+
+    <!-- Redirect: Pregnant -->
+    <div class="q-step" id="qs-rpreg">
+      <div class="redirect-card">
+        <div class="redirect-icon">🌿</div>
+        <p class="redirect-title">We recommend a full consultation for your stage</p>
+        <p class="redirect-body">Pregnancy and postpartum care requires a full clinical assessment. We'd love to support you — please book directly at our Heathmont clinic.</p>
+        <button class="btn-outline" onclick="window.open('https://www.heathmontchinesemedicine.com.au/bookings/')">Book a clinic appointment</button>
+        <button class="redirect-back" onclick="qGoStep('qs-2',2)">← Go back</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Concerns -->
+    <div class="q-step" id="qs-3">
+      <p class="q-num">Question 3</p>
+      <h2 class="q-text">What brings you here today?</h2>
+      <p class="q-sub">Select everything that feels relevant.</p>
+      <p class="q-multi">You can choose more than one.</p>
+      <div id="complexity-note" class="complexity-note" style="display:none">You've selected several concerns. Dr Keane will review these on your call.</div>
+      <div class="options" id="concerns-opts">
+        <button class="opt-btn" onclick="qToggleConcern(this,'hormones')"><div><p class="opt-label">My cycle or hormones</p><p class="opt-sub">Periods, PMS, irregularity</p></div><div class="opt-check"></div></button>
+        <button class="opt-btn" onclick="qToggleConcern(this,'energy')"><div><p class="opt-label">My energy and mood</p><p class="opt-sub">Fatigue, brain fog, anxiety, low mood</p></div><div class="opt-check"></div></button>
+        <button class="opt-btn" onclick="qToggleConcern(this,'skin')"><div><p class="opt-label">My skin</p><p class="opt-sub">Acne, oiliness, dullness or dryness</p></div><div class="opt-check"></div></button>
+        <button class="opt-btn" onclick="qToggleConcern(this,'digestion')"><div><p class="opt-label">My digestion or weight</p><p class="opt-sub">Bloating, sluggishness, weight changes</p></div><div class="opt-check"></div></button>
+        <button class="opt-btn" onclick="qToggleConcern(this,'sleep')"><div><p class="opt-label">Sleep or temperature</p><p class="opt-sub">Night sweats, insomnia, hot flushes</p></div><div class="opt-check"></div></button>
+        <button class="opt-btn" onclick="qToggleConcern(this,'postviral')"><div><p class="opt-label">Chronic fatigue or post-illness recovery</p><p class="opt-sub">Long-term exhaustion, post-viral symptoms</p></div><div class="opt-check"></div></button>
+      </div>
+      <button class="btn-disabled" id="q3-continue" onclick="qGoStep('qs-4',4)">Continue</button>
+    </div>
+
+    <!-- Step 4: Energy -->
+    <div class="q-step" id="qs-4">
+      <p class="q-num">Question 4</p>
+      <h2 class="q-text">How would you describe your energy on most days?</h2>
+      <p class="q-sub">Choose the option that feels most like you.</p>
+      <div class="options">
+        <button class="opt-btn" onclick="qSelectSingle(this,'energy','wired','qs-5',5)"><div><p class="opt-label">Wired but tired</p><p class="opt-sub">Anxious, restless, mind won't switch off</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+        <button class="opt-btn" onclick="qSelectSingle(this,'energy','heavy','qs-5',5)"><div><p class="opt-label">Heavy and sluggish</p><p class="opt-sub">Hard to get going, foggy, slow</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+        <button class="opt-btn" onclick="qSelectSingle(this,'energy','depleted','qs-5',5)"><div><p class="opt-label">Empty and depleted</p><p class="opt-sub">Deep exhaustion, pale, low motivation</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+        <button class="opt-btn" onclick="qSelectSingle(this,'energy','variable','qs-5',5)"><div><p class="opt-label">Variable — depends on the day</p><p class="opt-sub">No consistent pattern</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+      </div>
+    </div>
+
+    <!-- Step 5: Temperature -->
+    <div class="q-step" id="qs-5">
+      <p class="q-num">Question 5</p>
+      <h2 class="q-text">How does your body tend to run — temperature-wise?</h2>
+      <p class="q-sub">Think about how you feel most of the time, not just occasionally.</p>
+      <div class="options">
+        <button class="opt-btn" onclick="qSelectSingle(this,'temp','hot','qs-6',6)"><div><p class="opt-label">Warmer than most people</p><p class="opt-sub">Often hot, prefer cool environments</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+        <button class="opt-btn" onclick="qSelectSingle(this,'temp','cold','qs-6',6)"><div><p class="opt-label">Colder than most people</p><p class="opt-sub">Often cold, love warmth and layers</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+        <button class="opt-btn" onclick="qSelectSingle(this,'temp','mixed','qs-6',6)"><div><p class="opt-label">Both — hot and cold at different times</p><p class="opt-sub">Hot flushes but also cold hands and feet</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+        <button class="opt-btn" onclick="qSelectSingle(this,'temp','neutral','qs-6',6)"><div><p class="opt-label">Neither — pretty neutral</p></div><div class="opt-radio"><div class="opt-radio-inner"></div></div></button>
+      </div>
+    </div>
+
+    <!-- Step 6: Result -->
+    <div class="q-step" id="qs-6">
+      <span class="result-badge">Your intake</span>
+      <h2 class="result-title">We have enough to <em>get started.</em></h2>
+      <p class="result-body">Based on your answers, we have a clear picture of what's going on. The next step is a photo of your tongue — then a short phone call with Dr Justin Keane to confirm your formula.</p>
+      <div class="result-card">
+        <p class="result-card-label">What we noted</p>
+        <div class="result-row"><span class="rdot"></span><span id="r-age">Age group captured</span></div>
+        <div class="result-row"><span class="rdot"></span><span id="r-cycle">Cycle status noted</span></div>
+        <div class="result-row"><span class="rdot"></span><span id="r-concerns">Main concerns identified</span></div>
+        <div class="result-row"><span class="rdot"></span><span id="r-energy">Energy pattern noted</span></div>
+        <div class="result-row"><span class="rdot"></span><span id="r-temp">Temperature tendency noted</span></div>
+      </div>
+      <button class="btn-primary" onclick="goTo('tongue')">Next — take tongue photo</button>
+      <p class="proceed-sub">Takes about 1 minute</p>
+    </div>
+
+  </div><!-- end questionnaire -->
+
+
+  <!-- ═══════════════════════════════════
+       TONGUE PHOTO SCREEN
+  ═══════════════════════════════════ -->
+  <div class="screen" id="screen-tongue">
+
+    <nav class="topnav">
+      <button class="back-btn" onclick="goTo('questionnaire')">← Back</button>
+      <span style="font-family:var(--serif);font-size:15px;color:var(--brown-mid)">Justin Keane CM</span>
+      <button class="save-btn">Save & exit</button>
+    </nav>
+
+    <div class="progress-wrap">
+      <div class="progress-row"><span>Step 6 of 7</span><span>83%</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:83%"></div></div>
+    </div>
+
+    <div class="section">
+      <p class="step-tag">Almost there</p>
+      <h1 class="screen-headline">Before we book — we need a photo of your <em>tongue.</em></h1>
+      <p class="screen-sub">Your tongue tells us a lot. This photo helps Dr Keane confirm the right formula for you before your call.</p>
+
+      <div class="checklist">
+        <button class="check-item" onclick="toggleCheck(this)">
+          <div class="checkbox"></div>
+          <div><p class="check-title">If you use a tongue scraper — take the photo first</p><p class="check-desc">Before scraping, not after. The coating on your tongue is clinically important.</p></div>
+        </button>
+        <button class="check-item" onclick="toggleCheck(this)">
+          <div class="checkbox"></div>
+          <div><p class="check-title">Recently eaten or had coffee? Wait 30 minutes</p><p class="check-desc">Food and drinks temporarily change tongue colour and coating.</p></div>
+        </button>
+        <button class="check-item" onclick="toggleCheck(this)">
+          <div class="checkbox"></div>
+          <div><p class="check-title">Find good natural light</p><p class="check-desc">Near a window is ideal. Avoid artificial yellow or warm lighting.</p></div>
+        </button>
+      </div>
+
+      <div class="amber-note">
+        <span class="amber-icon">ℹ</span>
+        <p class="amber-text">We need to see the entire surface — from the very tip to the back root of your tongue. Stick it out as far as comfortable and take the photo from directly above.</p>
+      </div>
+
+      <div class="example-block">
+        <div class="example-head">Example — what a good photo looks like</div>
+        <div class="example-img">
+          <svg viewBox="0 0 342 180" xmlns="http://www.w3.org/2000/svg" class="tongue-svg" aria-label="Example tongue photo">
+            <rect width="342" height="180" fill="#F8F0E8"/>
+            <ellipse cx="171" cy="105" rx="68" ry="82" fill="#E8A090" opacity="0.95"/>
+            <ellipse cx="171" cy="178" rx="44" ry="22" fill="#E8A090" opacity="0.95"/>
+            <ellipse cx="171" cy="95" rx="66" ry="75" fill="#E09080"/>
+            <line x1="171" y1="28" x2="171" y2="165" stroke="#C8706A" stroke-width="1.5" opacity="0.5"/>
+            <ellipse cx="171" cy="90" rx="38" ry="48" fill="rgba(255,255,255,0.25)"/>
+            <ellipse cx="171" cy="165" rx="32" ry="20" fill="#D06060" opacity="0.4"/>
+            <circle cx="155" cy="75" r="2" fill="#C87070" opacity="0.4"/><circle cx="168" cy="68" r="1.5" fill="#C87070" opacity="0.3"/><circle cx="180" cy="72" r="2" fill="#C87070" opacity="0.4"/><circle cx="163" cy="88" r="1.5" fill="#C87070" opacity="0.3"/><circle cx="178" cy="85" r="2" fill="#C87070" opacity="0.4"/>
+            <line x1="240" y1="42" x2="210" y2="52" stroke="#A07850" stroke-width="1" opacity="0.7"/>
+            <circle cx="240" cy="41" r="2" fill="#A07850" opacity="0.7"/>
+            <text x="244" y="38" font-family="DM Sans,sans-serif" font-size="10" fill="#A07850">Root</text>
+            <line x1="240" y1="155" x2="210" y2="165" stroke="#A07850" stroke-width="1" opacity="0.7"/>
+            <circle cx="240" cy="154" r="2" fill="#A07850" opacity="0.7"/>
+            <text x="244" y="152" font-family="DM Sans,sans-serif" font-size="10" fill="#A07850">Tip</text>
+            <line x1="100" y1="82" x2="133" y2="88" stroke="#A07850" stroke-width="1" opacity="0.6"/>
+            <text x="60" y="80" font-family="DM Sans,sans-serif" font-size="10" fill="#A07850">Coating</text>
+            <rect x="12" y="12" width="86" height="22" rx="11" fill="rgba(74,124,89,0.15)"/>
+            <text x="22" y="26" font-family="DM Sans,sans-serif" font-size="10" fill="#4A7C59" font-weight="500">Natural light</text>
+            <text x="171" y="18" font-family="DM Sans,sans-serif" font-size="10" fill="#A07850" text-anchor="middle" opacity="0.8">Full surface visible</text>
+          </svg>
+        </div>
+        <div class="example-cap">
+          <p>The entire surface from root to tip should be clearly visible.</p>
+          <div class="cap-row">
+            <div class="cap-item"><span class="cap-dot" style="background:#4A7C59"></span>Natural daylight</div>
+            <div class="cap-item"><span class="cap-dot" style="background:#C1673A"></span>Tongue fully extended</div>
+            <div class="cap-item"><span class="cap-dot" style="background:#A07850"></span>Camera directly above</div>
+          </div>
+        </div>
+      </div>
+
+      <img id="tongue-preview" style="display:none;width:100%;height:180px;object-fit:cover;border-radius:12px;margin-bottom:12px;" alt="Your tongue photo">
+
+      <div class="upload-area" id="upload-area" onclick="document.getElementById('tongue-input').click()">
+        <input type="file" id="tongue-input" accept="image/*" capture="environment" style="display:none" onchange="handleTongueUpload(event)">
+        <div class="upload-icon-wrap" id="upload-icon">📷</div>
+        <p class="upload-title" id="upload-title">Take or upload a photo</p>
+        <p class="upload-sub" id="upload-sub">Tap to open your camera or photo library</p>
+      </div>
+
+      <button class="retake-link" id="retake-btn" onclick="retakeTongue()">Retake photo</button>
+
+      <button class="btn-disabled" id="tongue-continue" onclick="goTo('booking')">Continue to booking</button>
+      <p class="privacy-note">Your photo is shared only with Dr Keane</p>
+    </div>
+
+  </div><!-- end tongue -->
+
+
+  <!-- ═══════════════════════════════════
+       BOOKING SCREEN
+  ═══════════════════════════════════ -->
+  <div class="screen" id="screen-booking">
+
+    <nav class="topnav">
+      <button class="back-btn" id="booking-back" onclick="bookingBack()">← Back</button>
+      <span style="font-family:var(--serif);font-size:15px;color:var(--brown-mid)">Justin Keane CM</span>
+      <div style="width:40px"></div>
+    </nav>
+
+    <div class="progress-wrap">
+      <div class="progress-row"><span id="b-step-label">Step 7 of 7</span><span id="b-step-pct">90%</span></div>
+      <div class="progress-track"><div class="progress-fill" id="b-progress" style="width:90%"></div></div>
+    </div>
+
+    <!-- Booking Step 1: Date -->
+    <div class="booking-step active" id="bs-date">
+      <p class="step-tag">Last step</p>
+      <h1 class="screen-headline">Choose a time for your <em>phone consult.</em></h1>
+      <p class="screen-sub">A 10-minute call with Dr Justin Keane. Pick a day that suits you.</p>
+
+      <div class="prac-summary">
+        <div class="sum-avatar">JK</div>
+        <div class="sum-info"><p class="sum-name">Dr Justin Keane</p><p class="sum-detail">Phone consultation · 10 min</p></div>
+        <div><p class="sum-price">$65</p><p class="sum-price-sub">inc. GST</p></div>
+      </div>
+
+      <div class="month-nav">
+        <button class="month-btn" id="prev-month" onclick="changeMonth(-1)" disabled>←</button>
+        <p class="month-title" id="month-display">April 2026</p>
+        <button class="month-btn" onclick="changeMonth(1)">→</button>
+      </div>
+
+      <div class="calendar">
+        <div class="cal-header">
+          <div class="cal-day-label">Su</div><div class="cal-day-label">Mo</div><div class="cal-day-label">Tu</div>
+          <div class="cal-day-label">We</div><div class="cal-day-label">Th</div><div class="cal-day-label">Fr</div><div class="cal-day-label">Sa</div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+
+      <div id="slots-section" style="display:none">
+        <div class="slots-section">
+          <p class="slots-label">Available times</p>
+          <div class="slots-grid" id="slots-grid"></div>
+        </div>
+      </div>
+
+      <button class="btn-disabled" id="date-continue" onclick="bookingGoStep('details')">Continue</button>
+    </div>
+
+    <!-- Booking Step 2: Details -->
+    <div class="booking-step" id="bs-details">
+      <p class="step-tag">Your details</p>
+      <h1 class="screen-headline">Just a few details to <em>confirm your booking.</em></h1>
+      <p class="screen-sub">We'll send your confirmation and consult reminder here.</p>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">First name</label><input class="form-input" type="text" placeholder="First name" oninput="checkDetailsForm()"></div>
+        <div class="form-group"><label class="form-label">Last name</label><input class="form-input" type="text" placeholder="Last name" oninput="checkDetailsForm()"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email address</label><input class="form-input" type="email" id="detail-email" placeholder="your@email.com" oninput="checkDetailsForm()"></div>
+      <div class="form-group"><label class="form-label">Mobile number</label><input class="form-input" type="tel" id="detail-phone" placeholder="04XX XXX XXX" oninput="checkDetailsForm()"></div>
+      <div class="form-group"><label class="form-label">State</label>
+        <select class="form-input" id="detail-state" onchange="checkDetailsForm()">
+          <option value="">Select your state</option>
+          <option>VIC</option><option>NSW</option><option>QLD</option><option>SA</option>
+          <option>WA</option><option>TAS</option><option>NT</option><option>ACT</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Anything else for Dr Keane? (optional)</label><textarea class="form-input" rows="3" placeholder="Any medications, health conditions or context..." style="resize:none;line-height:1.6"></textarea></div>
+      <button class="btn-disabled" id="details-continue" onclick="bookingGoStep('payment')">Continue to payment</button>
+    </div>
+
+    <!-- Booking Step 3: Payment -->
+    <div class="booking-step" id="bs-payment">
+      <p class="step-tag">Payment</p>
+      <h1 class="screen-headline">Secure your <em>booking.</em></h1>
+      <p class="screen-sub">Payment is taken now to confirm your consultation time.</p>
+      <div class="order-summary">
+        <div class="order-row"><span>Phone consultation — 10 min</span><span>$59.09</span></div>
+        <div class="order-row"><span>GST</span><span>$5.91</span></div>
+        <div class="order-row order-total"><span>Total</span><span>$65.00</span></div>
+      </div>
+      <div class="pay-card">
+        <div class="pay-head">
+          <p class="pay-head-label">Card details</p>
+          <div class="secure-label">
+            <svg width="11" height="13" viewBox="0 0 11 13" fill="none"><rect x="1" y="5" width="9" height="7" rx="1.5" stroke="#4A7C59" stroke-width="1.2"/><path d="M3 5V3.5a2.5 2.5 0 0 1 5 0V5" stroke="#4A7C59" stroke-width="1.2" stroke-linecap="round"/></svg>
+            <span>Secure</span>
+          </div>
+        </div>
+        <div class="pay-body">
+          <div class="card-field">Card number</div>
+          <div class="card-row"><div class="card-field">MM / YY</div><div class="card-field">CVC</div></div>
+          <div class="card-field">Name on card</div>
+          <p class="stripe-note">Payments processed securely by Stripe</p>
+        </div>
+      </div>
+      <button class="btn-primary" id="pay-btn" onclick="processPayment()">Pay $65.00 & confirm booking</button>
+      <p class="pay-note">You will receive a confirmation email and SMS reminder</p>
+    </div>
+
+    <!-- Booking Step 4: Confirmation -->
+    <div class="booking-step" id="bs-confirm">
+      <div style="text-align:center">
+        <div class="confirm-icon-wrap">✓</div>
+        <h1 class="confirm-title">You're <em>booked in.</em></h1>
+        <p class="confirm-body">Dr Keane will call you at your confirmed time. Please have your phone nearby and be in a quiet spot — the call takes about 10 minutes.</p>
+      </div>
+      <div class="confirm-details">
+        <div class="confirm-row"><span class="confirm-label">Practitioner</span><span class="confirm-value">Dr Justin Keane</span></div>
+        <div class="confirm-row"><span class="confirm-label">Date</span><span class="confirm-value" id="confirm-date">—</span></div>
+        <div class="confirm-row"><span class="confirm-label">Time</span><span class="confirm-value" id="confirm-time">—</span></div>
+        <div class="confirm-row"><span class="confirm-label">Type</span><span class="confirm-value">Phone call</span></div>
+        <div class="confirm-row"><span class="confirm-label">Paid</span><span class="confirm-value">$65.00</span></div>
+      </div>
+      <div class="confirm-note">A confirmation email and SMS reminder have been sent to you. If you need to reschedule, please contact us at least 24 hours before your appointment.</div>
+      <button class="btn-primary" onclick="goTo('home')">Back to home</button>
+    </div>
+
+  </div><!-- end booking -->
+
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button class="nav-tab active" id="tab-home" onclick="goTo('home')">
+      <span class="tab-icon">⌂</span><span class="tab-label">Home</span>
+    </button>
+    <button class="nav-tab" id="tab-learn" onclick="goTo('learn')">
+      <span class="tab-icon">◎</span><span class="tab-label">Learn</span>
+    </button>
+    <button class="nav-tab" id="tab-questionnaire" onclick="goTo('questionnaire')">
+      <span class="tab-icon">✎</span><span class="tab-label">Quiz</span>
+    </button>
+    <button class="nav-tab" id="tab-tongue" onclick="goTo('tongue')">
+      <span class="tab-icon">⬡</span><span class="tab-label">Photo</span>
+    </button>
+    <button class="nav-tab" id="tab-booking" onclick="goTo('booking')">
+      <span class="tab-icon">▦</span><span class="tab-label">Booking</span>
+    </button>
+  </div>
+
+</div><!-- end phone -->
+</div><!-- end app-shell -->
+
+<script>
+// ─────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────
+const SCREENS = ['home','learn','questionnaire','tongue','booking'];
+
+function goTo(name) {
+  // Hide all screens
+  SCREENS.forEach(s => {
+    document.getElementById('screen-' + s).classList.remove('active');
+    document.getElementById('tab-' + s).classList.remove('active');
+  });
+  // Show target
+  document.getElementById('screen-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  // Scroll to top
+  document.querySelector('.phone').scrollTop = 0;
+  window.scrollTo(0, 0);
+}
+
+function scrollToId(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ─────────────────────────────────────────
+// FAQ
+// ─────────────────────────────────────────
+function toggleFaq(btn) {
+  const item = btn.parentElement;
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if (!wasOpen) item.classList.add('open');
+}
+
+// ─────────────────────────────────────────
+// QUESTIONNAIRE
+// ─────────────────────────────────────────
+const qAnswers = { age: null, cycle: null, concerns: [], energy: null, temp: null };
+const qHistory = ['qs-1'];
+
+function qSetProgress(step, total) {
+  const pct = Math.round((step / total) * 100);
+  document.getElementById('q-step-label').textContent = 'Step ' + step + ' of ' + total;
+  document.getElementById('q-step-pct').textContent = pct + '%';
+  document.getElementById('q-progress').style.width = pct + '%';
+}
+
+function qGoStep(stepId, num) {
+  document.querySelectorAll('.q-step').forEach(s => s.classList.remove('active'));
+  document.getElementById(stepId).classList.add('active');
+  if (!qHistory.includes(stepId)) qHistory.push(stepId);
+  if (num) qSetProgress(num, 6);
+  document.querySelector('.phone').scrollTop = 0;
+}
+
+function qBack() {
+  if (qHistory.length <= 1) { goTo('home'); return; }
+  qHistory.pop();
+  const prev = qHistory[qHistory.length - 1];
+  document.querySelectorAll('.q-step').forEach(s => s.classList.remove('active'));
+  document.getElementById(prev).classList.add('active');
+  document.querySelector('.phone').scrollTop = 0;
+}
+
+function qSelectAge(value) {
+  qAnswers.age = value;
+  // Highlight selected button
+  document.querySelectorAll('#qs-1 .opt-btn').forEach(b => b.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  setTimeout(() => {
+    if (value === 'under18') { qGoStep('qs-r18', null); }
+    else { qGoStep('qs-2', 2); }
+  }, 280);
+}
+
+function qSelectSingle(btn, field, value, nextStep, num) {
+  qAnswers[field] = value;
+  // Clear siblings
+  btn.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  // Update result labels
+  updateResultLabels();
+  setTimeout(() => qGoStep(nextStep, num), 280);
+}
+
+function qSelectPregnant(btn) {
+  btn.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  setTimeout(() => qGoStep('qs-rpreg', null), 280);
+}
+
+function qToggleConcern(btn, value) {
+  btn.classList.toggle('selected');
+  const check = btn.querySelector('.opt-check');
+  if (btn.classList.contains('selected')) {
+    if (!qAnswers.concerns.includes(value)) qAnswers.concerns.push(value);
+    check.textContent = '✓';
+  } else {
+    qAnswers.concerns = qAnswers.concerns.filter(v => v !== value);
+    check.textContent = '';
+  }
+  // Complexity flag
+  const note = document.getElementById('complexity-note');
+  note.style.display = qAnswers.concerns.length >= 3 ? 'block' : 'none';
+  // Enable continue
+  const btn3 = document.getElementById('q3-continue');
+  if (qAnswers.concerns.length > 0) {
+    btn3.className = 'btn-primary';
+  } else {
+    btn3.className = 'btn-disabled';
+  }
+  updateResultLabels();
+}
+
+function updateResultLabels() {
+  const ageMap = { '18-34': 'Ages 18–34', '35-50': 'Ages 35–50', '51+': 'Ages 51+' };
+  const cycleMap = { regular: 'Regular cycle', irregular: 'Irregular cycle', perimenopause: 'Changing or stopping', stopped: 'Post-menopause', contraception: 'On hormonal contraception' };
+  const energyMap = { wired: 'Wired but tired', heavy: 'Heavy and sluggish', depleted: 'Empty and depleted', variable: 'Variable energy' };
+  const tempMap = { hot: 'Runs warm', cold: 'Runs cold', mixed: 'Mixed — hot and cold', neutral: 'Neutral temperature' };
+  if (qAnswers.age)     document.getElementById('r-age').textContent    = ageMap[qAnswers.age]     || 'Age group captured';
+  if (qAnswers.cycle)   document.getElementById('r-cycle').textContent  = cycleMap[qAnswers.cycle] || 'Cycle status noted';
+  if (qAnswers.concerns.length) document.getElementById('r-concerns').textContent = qAnswers.concerns.length + ' concern' + (qAnswers.concerns.length > 1 ? 's' : '') + ' identified';
+  if (qAnswers.energy)  document.getElementById('r-energy').textContent = energyMap[qAnswers.energy] || 'Energy pattern noted';
+  if (qAnswers.temp)    document.getElementById('r-temp').textContent   = tempMap[qAnswers.temp]   || 'Temperature tendency noted';
+}
+
+// ─────────────────────────────────────────
+// TONGUE PHOTO
+// ─────────────────────────────────────────
+function toggleCheck(btn) { btn.classList.toggle('checked'); const cb = btn.querySelector('.checkbox'); cb.textContent = btn.classList.contains('checked') ? '✓' : ''; }
+
+function handleTongueUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const preview = document.getElementById('tongue-preview');
+    preview.src = ev.target.result; preview.style.display = 'block';
+    const area = document.getElementById('upload-area');
+    area.classList.add('uploaded');
+    document.getElementById('upload-icon').textContent = '✓';
+    document.getElementById('upload-title').textContent = 'Photo uploaded';
+    document.getElementById('upload-sub').textContent = 'Tap to replace';
+    document.getElementById('retake-btn').style.display = 'block';
+    const cont = document.getElementById('tongue-continue');
+    cont.className = 'btn-primary';
+  };
+  reader.readAsDataURL(file);
+}
+
+function retakeTongue() {
+  document.getElementById('tongue-input').value = '';
+  document.getElementById('tongue-preview').style.display = 'none';
+  document.getElementById('upload-area').classList.remove('uploaded');
+  document.getElementById('upload-icon').textContent = '📷';
+  document.getElementById('upload-title').textContent = 'Take or upload a photo';
+  document.getElementById('upload-sub').textContent = 'Tap to open your camera or photo library';
+  document.getElementById('retake-btn').style.display = 'none';
+  document.getElementById('tongue-continue').className = 'btn-disabled';
+}
+
+// ─────────────────────────────────────────
+// BOOKING CALENDAR
+// ─────────────────────────────────────────
+const AVAILABILITY = {
+  '2026-4-17': ['10:30 am','10:45 am','7:00 pm','7:15 pm','7:30 pm','7:45 pm'],
+  '2026-4-20': ['10:30 am','10:45 am','7:00 pm','7:15 pm'],
+  '2026-4-22': ['10:30 am','7:00 pm','7:15 pm','7:30 pm','7:45 pm'],
+  '2026-4-24': ['10:30 am','10:45 am','7:30 pm','7:45 pm'],
+  '2026-4-27': ['10:30 am','10:45 am','7:00 pm','7:15 pm','7:30 pm','7:45 pm'],
+  '2026-4-29': ['10:45 am','7:00 pm','7:15 pm'],
+  '2026-5-1':  ['10:30 am','10:45 am','7:00 pm','7:15 pm','7:30 pm','7:45 pm'],
+  '2026-5-4':  ['10:30 am','7:00 pm','7:15 pm','7:30 pm'],
+  '2026-5-6':  ['10:30 am','10:45 am','7:45 pm'],
+  '2026-5-8':  ['10:30 am','10:45 am','7:00 pm','7:15 pm','7:30 pm','7:45 pm'],
+};
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+let calYear = 2026, calMonth = 4, selDate = null, selTime = null;
+
+function renderCalendar() {
+  document.getElementById('month-display').textContent = MONTHS[calMonth-1] + ' ' + calYear;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const firstDay = new Date(calYear, calMonth-1, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth, 0).getDate();
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  for (let i = 0; i < firstDay; i++) {
+    const el = document.createElement('div'); el.className = 'cal-cell'; grid.appendChild(el);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(calYear, calMonth-1, d);
+    const key = calYear + '-' + calMonth + '-' + d;
+    const isPast = date < today;
+    const isAvail = !!AVAILABILITY[key] && !isPast;
+    const isSelected = selDate === key;
+
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (isPast ? ' past' : '') + (!isAvail && !isPast ? ' unavail' : '') + (isAvail ? ' available' : '') + (isSelected ? ' selected' : '');
+
+    const btn = document.createElement('button');
+    btn.disabled = !isAvail;
+    btn.innerHTML = d + (isAvail ? '<span class="avail-dot"></span>' : '');
+    if (isAvail) btn.onclick = () => selectDate(key);
+    cell.appendChild(btn);
+    grid.appendChild(cell);
+  }
+}
+
+function selectDate(key) {
+  selDate = key; selTime = null;
+  renderCalendar();
+  const slots = AVAILABILITY[key] || [];
+  const grid = document.getElementById('slots-grid');
+  grid.innerHTML = '';
+  slots.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'slot-btn';
+    btn.textContent = t;
+    btn.onclick = () => selectTime(t, btn);
+    grid.appendChild(btn);
+  });
+  document.getElementById('slots-section').style.display = 'block';
+  document.getElementById('date-continue').className = 'btn-disabled';
+}
+
+function selectTime(t, btn) {
+  selTime = t;
+  document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('date-continue').className = 'btn-primary';
+}
+
+function changeMonth(dir) {
+  calMonth += dir;
+  if (calMonth > 12) { calMonth = 1; calYear++; }
+  if (calMonth < 1)  { calMonth = 12; calYear--; }
+  selDate = null; selTime = null;
+  document.getElementById('slots-section').style.display = 'none';
+  document.getElementById('date-continue').className = 'btn-disabled';
+  document.getElementById('prev-month').disabled = (calMonth === 4 && calYear === 2026);
+  renderCalendar();
+}
+
+// ─────────────────────────────────────────
+// BOOKING FLOW
+// ─────────────────────────────────────────
+const BOOKING_STEPS = ['date','details','payment','confirm'];
+let currentBookingStep = 'date';
+
+function bookingGoStep(step) {
+  BOOKING_STEPS.forEach(s => document.getElementById('bs-' + s).classList.remove('active'));
+  document.getElementById('bs-' + step).classList.add('active');
+  currentBookingStep = step;
+  document.querySelector('.phone').scrollTop = 0;
+
+  const labels = { date: 'Step 7 of 7', details: 'Step 7 of 7', payment: 'Step 7 of 7', confirm: 'Complete' };
+  const pcts   = { date: '90%', details: '95%', payment: '98%', confirm: '100%' };
+  document.getElementById('b-step-label').textContent = labels[step];
+  document.getElementById('b-step-pct').textContent   = pcts[step];
+  document.getElementById('b-progress').style.width   = pcts[step];
+  if (step === 'confirm') document.getElementById('b-progress').style.background = '#4A7C59';
+  document.getElementById('booking-back').style.display = step === 'confirm' ? 'none' : 'block';
+}
+
+function bookingBack() {
+  const idx = BOOKING_STEPS.indexOf(currentBookingStep);
+  if (idx <= 0) { goTo('tongue'); return; }
+  bookingGoStep(BOOKING_STEPS[idx - 1]);
+}
+
+function checkDetailsForm() {
+  const email = document.getElementById('detail-email').value;
+  const phone = document.getElementById('detail-phone').value;
+  const state = document.getElementById('detail-state').value;
+  const ready = email.length > 4 && phone.length > 7 && state !== '';
+  document.getElementById('details-continue').className = ready ? 'btn-primary' : 'btn-disabled';
+}
+
+function processPayment() {
+  const btn = document.getElementById('pay-btn');
+  btn.textContent = 'Processing...'; btn.style.opacity = '0.7';
+  setTimeout(() => {
+    const parts = selDate ? selDate.split('-') : [];
+    const dateStr = parts.length === 3
+      ? new Date(parts[0], parts[1]-1, parts[2]).toLocaleDateString('en-AU', { weekday:'long', day:'numeric', month:'long' })
+      : '—';
+    document.getElementById('confirm-date').textContent = dateStr;
+    document.getElementById('confirm-time').textContent = selTime || '—';
+    bookingGoStep('confirm');
+  }, 1800);
+}
+
+// ─────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────
+renderCalendar();
+</script>
+
+</body>
+</html>
