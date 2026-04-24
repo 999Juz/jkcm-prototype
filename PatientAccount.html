@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Account — Justin Keane Chinese Medicine</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream:      #FAF5ED;
+  --cream-dark: #F2E9D8;
+  --terra:      #C1673A;
+  --terra-dark: #A3522B;
+  --brown:      #3D2B1F;
+  --brown-mid:  #7A5C45;
+  --brown-lt:   #A07850;
+  --muted:      #8B6E54;
+  --border:     rgba(161,120,80,0.2);
+  --green:      #4A7C59;
+  --green-bg:   #F0F7F2;
+  --amber:      #A07020;
+  --amber-bg:   #FDF5E6;
+  --serif:      'Cormorant Garamond', serif;
+  --sans:       'DM Sans', sans-serif;
+}
+
+html, body {
+  font-family: var(--sans);
+  background: #E8E0D4;
+  color: var(--brown);
+  font-size: 16px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+button { font-family: var(--sans); cursor: pointer; }
+
+.app-shell { display: flex; justify-content: center; padding: 40px 20px; min-height: 100vh; }
+
+.phone {
+  width: 390px;
+  background: var(--cream);
+  border-radius: 40px;
+  overflow: hidden;
+  box-shadow: 0 40px 80px rgba(61,43,31,0.2);
+  border: 1px solid rgba(161,120,80,0.15);
+}
+
+.notch { height: 34px; display: flex; align-items: center; justify-content: center; background: var(--cream); }
+.notch-bar { width: 110px; height: 4px; background: var(--border); border-radius: 2px; }
+
+/* NAV */
+nav {
+  background: rgba(250,245,237,0.96);
+  backdrop-filter: blur(8px);
+  border-bottom: 0.5px solid var(--border);
+  padding: 13px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky; top: 0; z-index: 50;
+}
+
+.nav-brand { background: none; border: none; padding: 0; text-align: left; cursor: pointer; }
+.nav-brand-name { font-family: var(--serif); font-size: 17px; font-weight: 500; color: var(--brown); line-height: 1.2; }
+.nav-brand-sub  { font-size: 10px; font-weight: 300; color: var(--brown-lt); letter-spacing: 0.06em; text-transform: uppercase; }
+.sign-out-btn   { background: none; border: none; font-size: 12px; color: var(--brown-lt); padding: 0; }
+
+/* WELCOME */
+.welcome-header {
+  background: var(--cream-dark);
+  padding: 28px 24px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.welcome-avatar {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: var(--terra);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--serif); font-size: 18px; color: #fff;
+}
+
+.welcome-name { font-family: var(--serif); font-size: 24px; font-weight: 400; color: var(--brown); margin-bottom: 3px; line-height: 1.2; }
+.welcome-meta { font-size: 12px; color: var(--brown-mid); font-weight: 300; }
+
+/* TAB BAR */
+.tab-bar {
+  display: flex;
+  border-bottom: 0.5px solid var(--border);
+  background: var(--cream);
+  position: sticky; top: 52px; z-index: 40;
+}
+
+.tab {
+  flex: 1; padding: 13px 8px;
+  background: none; border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 13px; font-weight: 400;
+  color: var(--brown-lt);
+  cursor: pointer; transition: all 0.15s;
+}
+
+.tab.active { color: var(--terra); font-weight: 500; border-bottom-color: var(--terra); }
+
+/* TAB CONTENT */
+.tab-content { display: none; padding: 24px 24px 40px; }
+.tab-content.active { display: block; }
+
+/* SECTION LABEL */
+.section-label {
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--brown-lt); margin-bottom: 14px;
+}
+
+.divider { border: none; border-top: 0.5px solid var(--border); margin: 24px 0 0; }
+
+/* FORMULA CARD */
+.formula-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.formula-card-header {
+  padding: 16px 18px;
+  border-bottom: 0.5px solid var(--border);
+  display: flex; align-items: flex-start; gap: 12px;
+  background: rgba(193,103,58,0.04);
+}
+
+.formula-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--terra); flex-shrink: 0; margin-top: 6px; }
+.formula-name   { font-family: var(--serif); font-size: 22px; font-weight: 400; color: var(--terra); font-style: italic; margin-bottom: 2px; }
+.formula-dosage { font-size: 12px; color: var(--brown-mid); font-weight: 300; line-height: 1.5; }
+
+.formula-details { padding: 0 18px; }
+
+.detail-row {
+  display: flex; justify-content: space-between;
+  padding: 9px 0; border-bottom: 0.5px solid var(--border);
+  font-size: 13px;
+}
+
+.detail-row:last-child { border-bottom: none; }
+.detail-label { color: var(--brown-lt); font-weight: 300; }
+.detail-value { color: var(--brown); font-weight: 400; }
+
+.validity-badge {
+  margin: 10px 18px 4px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  border: 1px solid;
+  font-size: 12px; font-weight: 400; line-height: 1.5;
+}
+
+.formula-actions {
+  padding: 14px 18px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.btn-reorder {
+  display: block; width: 100%;
+  background: var(--terra); color: #fff;
+  font-size: 13px; font-weight: 500;
+  padding: 13px; border: none;
+  border-radius: 40px; transition: background 0.2s;
+}
+.btn-reorder:hover { background: var(--terra-dark); }
+
+.btn-modified {
+  display: block; width: 100%;
+  background: transparent; color: var(--terra);
+  font-size: 13px; font-weight: 400;
+  padding: 11px;
+  border: 1px solid rgba(193,103,58,0.3);
+  border-radius: 40px; transition: all 0.2s;
+}
+.btn-modified:hover { background: var(--terra); color: #fff; }
+
+/* PREP REMINDER */
+.prep-reminder {
+  background: var(--cream-dark);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+.prep-title { font-size: 13px; font-weight: 500; color: var(--brown); margin-bottom: 6px; }
+.prep-body  { font-size: 12px; color: var(--brown-mid); font-weight: 300; line-height: 1.7; }
+
+/* FOLLOW UP */
+.follow-up-section { border-top: 0.5px solid var(--border); padding-top: 20px; }
+.follow-up-title { font-size: 14px; font-weight: 500; color: var(--brown); margin-bottom: 6px; }
+.follow-up-body  { font-size: 13px; color: var(--brown-mid); font-weight: 300; line-height: 1.7; margin-bottom: 14px; }
+.btn-follow-up {
+  display: block; width: 100%;
+  background: transparent; color: var(--terra);
+  font-size: 13px; font-weight: 500;
+  padding: 13px;
+  border: 1.5px solid var(--terra);
+  border-radius: 40px; transition: all 0.2s;
+}
+.btn-follow-up:hover { background: var(--terra); color: #fff; }
+
+/* HISTORY */
+.history-list {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  overflow: hidden;
+}
+
+.history-item {
+  display: flex; justify-content: space-between;
+  align-items: flex-start;
+  padding: 13px 16px;
+  border-bottom: 0.5px solid var(--border);
+  gap: 12px; font-size: 13px;
+}
+
+.history-item:last-child { border-bottom: none; }
+.history-item.current { background: rgba(193,103,58,0.04); }
+.history-formula { font-family: var(--serif); font-size: 16px; font-weight: 400; color: var(--brown); font-style: italic; margin-bottom: 2px; }
+.history-meta    { font-size: 12px; color: var(--brown-mid); font-weight: 300; }
+.history-valid   { font-size: 11px; color: var(--brown-lt); font-weight: 300; text-align: right; flex-shrink: 0; }
+
+.empty-list-text { font-size: 13px; color: var(--brown-mid); font-weight: 300; font-style: italic; }
+
+/* ACCOUNT */
+.account-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.account-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 16px; border-bottom: 0.5px solid var(--border);
+  font-size: 13px;
+}
+
+.account-row:last-child { border-bottom: none; }
+.account-label { color: var(--brown-lt); font-weight: 300; }
+.account-value { color: var(--brown); font-weight: 400; }
+
+.btn-edit {
+  display: block; width: 100%;
+  background: var(--cream-dark);
+  border: 1px solid var(--border);
+  border-radius: 40px; padding: 12px;
+  font-size: 13px; font-weight: 500; color: var(--brown-mid);
+  margin-bottom: 24px; transition: background 0.15s;
+}
+.btn-edit:hover { background: #EAE0CE; }
+
+.legal-links { display: flex; flex-direction: column; gap: 10px; }
+.legal-link  { font-size: 13px; color: var(--terra); font-weight: 400; text-decoration: none; }
+
+.btn-signout {
+  display: block; width: 100%;
+  background: var(--cream-dark);
+  border: 1px solid var(--border);
+  border-radius: 40px; padding: 12px;
+  font-size: 13px; font-weight: 500; color: var(--brown-mid);
+  margin-bottom: 10px; transition: background 0.15s;
+}
+
+.btn-delete { display: block; width: 100%; background: none; border: none; padding: 8px 0; font-size: 12px; color: var(--muted); font-weight: 300; text-decoration: underline; text-decoration-color: var(--border); }
+.delete-note { font-size: 11px; color: var(--muted); font-weight: 300; line-height: 1.6; margin-top: 6px; }
+
+/* DISCLAIMER */
+footer {
+  padding: 18px 24px;
+  border-top: 0.5px solid var(--border);
+  text-align: center;
+}
+footer p { font-size: 11px; color: var(--muted); line-height: 1.7; font-weight: 300; }
+
+@media (max-width: 480px) {
+  body { background: var(--cream); }
+  .app-shell { padding: 0; }
+  .phone { width: 100%; border-radius: 0; box-shadow: none; }
+  .notch { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+<div class="phone">
+  <div class="notch"><div class="notch-bar"></div></div>
+
+  <!-- NAV -->
+  <nav>
+    <button class="nav-brand">
+      <div class="nav-brand-name">Justin Keane</div>
+      <div class="nav-brand-sub">Chinese Medicine</div>
+    </button>
+    <button class="sign-out-btn">Sign out</button>
+  </nav>
+
+  <!-- WELCOME -->
+  <div class="welcome-header">
+    <div class="welcome-avatar">SM</div>
+    <div>
+      <p class="welcome-name">Hello, Sarah.</p>
+      <p class="welcome-meta">Ages 18–34 &nbsp;·&nbsp; Patient since 14 April 2026</p>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('formula', this)">My formula</button>
+    <button class="tab" onclick="switchTab('history', this)">History</button>
+    <button class="tab" onclick="switchTab('account', this)">Account</button>
+  </div>
+
+
+  <!-- TAB: MY FORMULA -->
+  <div class="tab-content active" id="tab-formula">
+
+    <p class="section-label">Current prescription</p>
+
+    <div class="formula-card">
+      <div class="formula-card-header">
+        <div class="formula-dot"></div>
+        <div>
+          <p class="formula-name">Harmonise & Chill</p>
+          <p class="formula-dosage">1 teaspoon twice daily in hot water</p>
+        </div>
+      </div>
+
+      <div class="formula-details">
+        <div class="detail-row"><span class="detail-label">Valid until</span><span class="detail-value">9 June 2026</span></div>
+        <div class="detail-row"><span class="detail-label">Dispensed</span><span class="detail-value">25 April 2026</span></div>
+        <div class="detail-row"><span class="detail-label">Follow-up due</span><span class="detail-value">9 June 2026</span></div>
+      </div>
+
+      <div class="validity-badge" style="background:var(--green-bg);border-color:rgba(74,124,89,0.2);color:var(--green);">
+        44 days remaining
+      </div>
+
+      <div class="formula-actions">
+        <button class="btn-reorder" onclick="alert('Tongue photo screen opens — reorder mode')">↻ Reorder same formula</button>
+        <button class="btn-modified" onclick="alert('Modified reorder questionnaire opens')">Something has changed →</button>
+      </div>
+    </div>
+
+    <div class="prep-reminder">
+      <p class="prep-title">How to prepare your formula</p>
+      <p class="prep-body">Add 1 teaspoon of granules to a mug. Pour freshly boiled water over and stir until dissolved. Drink while warm, 30 minutes before meals.</p>
+    </div>
+
+    <div class="follow-up-section">
+      <p class="follow-up-title">Need a follow-up consultation?</p>
+      <p class="follow-up-body">If you'd like to speak with Dr Keane — about your progress, a change in symptoms, or a new concern — you can book a follow-up at any time.</p>
+      <button class="btn-follow-up" onclick="alert('Booking screen opens — follow-up mode')">Book a follow-up consultation</button>
+    </div>
+
+  </div>
+
+
+  <!-- TAB: HISTORY -->
+  <div class="tab-content" id="tab-history">
+
+    <p class="section-label">Formula history</p>
+    <div class="history-list">
+      <div class="history-item current">
+        <div>
+          <p class="history-formula">Harmonise & Chill</p>
+          <p class="history-meta">Dispensed 25 April 2026 &nbsp;·&nbsp; 1 tsp twice daily</p>
+        </div>
+        <p class="history-valid">Valid to 9 Jun 2026</p>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div style="margin-top:24px;">
+      <p class="section-label">Consultation history</p>
+      <div class="history-list">
+        <div class="history-item">
+          <div>
+            <p class="history-formula">Initial consultation</p>
+            <p class="history-meta">25 April 2026 &nbsp;·&nbsp; 10:30 am</p>
+          </div>
+          <p class="history-valid">Harmonise & Chill</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- TAB: ACCOUNT -->
+  <div class="tab-content" id="tab-account">
+
+    <p class="section-label">Your details</p>
+    <div class="account-card">
+      <div class="account-row"><span class="account-label">Name</span><span class="account-value">Sarah Mitchell</span></div>
+      <div class="account-row"><span class="account-label">Email</span><span class="account-value">sarah.mitchell@email.com</span></div>
+      <div class="account-row"><span class="account-label">Mobile</span><span class="account-value">0412 345 678</span></div>
+      <div class="account-row"><span class="account-label">State</span><span class="account-value">VIC</span></div>
+      <div class="account-row"><span class="account-label">Cohort</span><span class="account-value">Ages 18–34</span></div>
+      <div class="account-row"><span class="account-label">Member since</span><span class="account-value">14 April 2026</span></div>
+    </div>
+
+    <button class="btn-edit">Edit my details</button>
+
+    <hr class="divider">
+
+    <div style="margin-top:24px;">
+      <p class="section-label">Legal</p>
+      <div class="legal-links">
+        <a href="/PrivacyPolicy.html" class="legal-link">Privacy Policy →</a>
+        <a href="/TermsOfService.html" class="legal-link">Terms of Service →</a>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div style="margin-top:24px;">
+      <p class="section-label">Account</p>
+      <button class="btn-signout">Sign out</button>
+      <button class="btn-delete">Request account deletion</button>
+      <p class="delete-note">Clinical records are retained for 7 years as required by the Health Records Act 2001 (Vic).</p>
+    </div>
+
+  </div>
+
+  <footer>
+    <p>All formulas are prescribed by Dr Justin Keane (AHPRA: CMR0001739870) following a real-time consultation. This service does not replace medical advice.</p>
+  </footer>
+
+</div>
+</div>
+
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  document.querySelector('.phone').scrollTop = 0;
+  window.scrollTo(0, 0);
+}
+</script>
+
+</body>
+</html>
