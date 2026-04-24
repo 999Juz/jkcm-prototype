@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Practitioner Dashboard — Justin Keane Chinese Medicine</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!--
+  PractitionerDashboard.html
+  Justin Keane Chinese Medicine — Women's Health Platform
+
+  The practitioner-facing dashboard. Accessed by Dr Justin Keane
+  via desktop browser before and after consultations.
+
+  SECTIONS:
+    1. Summary bar — today's stats at a glance
+    2. Today's consultations — upcoming calls with patient prep
+    3. Reorder requests — tongue photos awaiting review
+    4. Recent dispatches — formulas sent in the last 7 days
+    5. Patient detail panel — slides in when a patient is selected
+    6. Complete consultation modal — structured clinical note
+    7. Send invoice modal — formula + postage details
+    8. Approve/decline reorder modal
+
+  INTEGRATION NOTES — for Peter Nguyen Brown:
+  ─────────────────────────────────────────────
+  1. AUTHENTICATION
+     This dashboard must be protected by authentication.
+     Only Dr Justin Keane should be able to access it.
+     Use Auth0 or Supabase Auth with a role of "practitioner".
+     Redirect any non-practitioner login to the patient platform.
+
+  2. DATA SOURCES
+     All data shown here comes from:
+       - Cliniko API — appointments, patient records
+       - Platform database — reorder requests, dispatch history,
+         tongue photo S3 keys, questionnaire summaries
+     The dashboard is a read/write interface on top of both.
+
+  3. COMPLETE CONSULTATION ACTION
+     When Dr Keane clicks "Mark complete" and submits the
+     structured note form:
+       a. POST the clinical note to Cliniko as a treatment note
+          on the appointment record
+       b. Update the appointment status in Cliniko to "completed"
+       c. Store the structured note in the platform database
+          linked to the patient record
+       d. Update the patient's current_formula_id if changed
+       e. Move the consultation card from "upcoming" to "completed"
+          in the dashboard UI
+
+  4. SEND INVOICE ACTION
+     When Dr Keane clicks "Send invoice" and submits:
+       a. Create a Stripe Payment Link for the total amount
+          (formula cost + postage)
+       b. Trigger the formula invoice email (email-formula-dispatch.html)
+          with the Stripe Payment Link embedded
+       c. Store the invoice record in the platform database
+       d. Update the consultation status to "invoiced"
+     On Stripe payment webhook (payment_intent.succeeded):
+       e. Trigger formula dispatch email with tracking field
+          (initially blank — Dr Keane adds tracking number manually)
+
+  5. APPROVE REORDER ACTION
+     When Dr Keane approves a reorder:
+       a. Create a new formula record in the platform database
+       b. Send the Stage 2 invoice email with Stripe Payment Link
+       c. Update the patient's reorder_count
+       d. Store the new tongue photo comparison in the patient record
+     When Dr Keane declines and recommends follow-up:
+       a. Send the patient a warm message with a booking link
+       b. Update the reorder request status to "declined"
+
+  6. MARK AS DISPATCHED
+     When Dr Keane enters a tracking number and clicks dispatch:
+       a. Update the order record in the platform database
+       b. Trigger the formula dispatch email with tracking number
+       c. Update dispatch status to "sent"
+
+  7. CLINIKO TONGUE PHOTO COMPARISON
+     The reorder review panel shows the new tongue photo
+     alongside the most recent previous photo. Both are
+     retrieved from S3 using pre-signed URLs (15 min expiry).
+     Generate fresh pre-signed URLs on each dashboard load.
+
+  VERSION: 1.0
+  ─────────────────────────────────────────────
+-->
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream:       #FAF5ED;
+  --cream-dark:  #F2E9D8;
+  --cream-mid:   #EDE3D2;
+  --terra:       #C1673A;
+  --terra-dark:  #A3522B;
+  --terra-light: rgba(193,103,58,0.1);
+  --brown:       #3D2B1F;
+  --brown-mid:   #7A5C45;
+  --brown-lt:    #A07850;
+  --muted:       #8B6E54;
+  --border:      rgba(161,120,80,0.2);
+  --border-mid:  rgba(161,120,80,0.3);
+  --white:       #FFFFFF;
+  --green:       #4A7C59;
+  --green-bg:    #F0F7F2;
+  --green-bdr:   rgba(74,124,89,0.2);
+  --amber:       #A07020;
+  --amber-bg:    #FDF5E6;
+  --amber-bdr:   rgba(160,112,32,0.2);
+  --red:         #B03A2E;
+  --red-bg:      #FDF0EE;
+  --sidebar-w:   260px;
+  --serif:       'Cormorant Garamond', serif;
+  --sans:        'DM Sans', sans-serif;
+}
+
+html, body {
+  font-family: var(--sans);
+  background: var(--cream-dark);
+  color: var(--brown);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font-family: var(--sans); cursor: pointer; }
+input, select, textarea { font-family: var(--sans); }
+
+/* ─────────────────────────────────
+   LAYOUT
+───────────────────────────────── */
+.layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+}
+
+/* ─────────────────────────────────
+   SIDEBAR
+───────────────────────────────── */
+.sidebar {
+  grid-row: 1 / 3;
+  background: var(--brown);
+  color: var(--cream);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  padding: 28px 24px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.sidebar-brand-name {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--cream);
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+
+.sidebar-brand-sub {
+  font-size: 10px;
+  font-weight: 300;
+  color: rgba(250,245,237,0.5);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sidebar-nav {
+  padding: 20px 12px;
+  flex: 1;
+}
+
+.sidebar-section-label {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(250,245,237,0.35);
+  padding: 0 12px;
+  margin-bottom: 6px;
+  margin-top: 20px;
+}
+
+.sidebar-section-label:first-child { margin-top: 0; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(250,245,237,0.65);
+  cursor: pointer;
+  transition: all 0.15s;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 2px;
+}
+
+.nav-item:hover { background: rgba(255,255,255,0.07); color: var(--cream); }
+
+.nav-item.active {
+  background: var(--terra);
+  color: var(--white);
+  font-weight: 500;
+}
+
+.nav-icon { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--terra);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 7px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.nav-item.active .nav-badge {
+  background: rgba(255,255,255,0.25);
+}
+
+.sidebar-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--terra);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 14px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.sidebar-user-name  { font-size: 13px; font-weight: 500; color: var(--cream); }
+.sidebar-user-role  { font-size: 11px; color: rgba(250,245,237,0.5); font-weight: 300; }
+.sidebar-user-ahpra { font-size: 10px; color: rgba(250,245,237,0.35); font-weight: 300; margin-top: 1px; }
+
+/* ─────────────────────────────────
+   TOP BAR
+───────────────────────────────── */
+.topbar {
+  background: var(--cream);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--brown);
+}
+
+.topbar-date {
+  font-size: 12px;
+  color: var(--brown-lt);
+  font-weight: 300;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-refresh {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 12px;
+  color: var(--brown-mid);
+  transition: all 0.15s;
+}
+
+.topbar-refresh:hover { background: var(--cream-dark); border-color: var(--border-mid); }
+
+/* ─────────────────────────────────
+   MAIN CONTENT
+───────────────────────────────── */
+.main {
+  padding: 28px 32px 48px;
+  overflow-y: auto;
+}
+
+/* ─────────────────────────────────
+   SUMMARY CARDS
+───────────────────────────────── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.summary-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+
+.summary-card-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--brown-lt);
+  margin-bottom: 8px;
+}
+
+.summary-card-value {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--brown);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.summary-card-sub {
+  font-size: 12px;
+  color: var(--brown-mid);
+  font-weight: 300;
+}
+
+.summary-card.alert { border-color: rgba(193,103,58,0.3); background: var(--terra-light); }
+.summary-card.alert .summary-card-value { color: var(--terra); }
+
+/* ─────────────────────────────────
+   SECTION HEADERS
+───────────────────────────────── */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--brown);
+}
+
+.section-link {
+  font-size: 12px;
+  color: var(--terra);
+  background: none;
+  border: none;
+  padding: 0;
+  font-weight: 400;
+}
+
+/* ─────────────────────────────────
+   CONSULTATION CARDS
+───────────────────────────────── */
+.consult-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.consult-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+
+.consult-card:hover { box-shadow: 0 4px 20px rgba(61,43,31,0.08); }
+
+.consult-card-header {
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 0.5px solid var(--border);
+  cursor: pointer;
+}
+
+.consult-time-badge {
+  background: var(--cream-dark);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  text-align: center;
+  flex-shrink: 0;
+  min-width: 72px;
+}
+
+.consult-time { font-size: 14px; font-weight: 500; color: var(--brown); line-height: 1.2; }
+.consult-ampm { font-size: 10px; color: var(--brown-lt); font-weight: 300; }
+
+.consult-patient { flex: 1; }
+.consult-name    { font-size: 14px; font-weight: 500; color: var(--brown); margin-bottom: 2px; }
+.consult-meta    { font-size: 12px; color: var(--brown-mid); font-weight: 300; }
+
+.consult-status {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.status-upcoming  { background: var(--terra-light); color: var(--terra); }
+.status-complete  { background: var(--green-bg); color: var(--green); }
+.status-invoiced  { background: rgba(74,124,89,0.08); color: var(--green); }
+.status-action    { background: var(--amber-bg); color: var(--amber); }
+
+.consult-actions {
+  padding: 12px 20px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #FDFAF6;
+}
+
+/* ─────────────────────────────────
+   PATIENT PREP PANEL
+───────────────────────────────── */
+.prep-panel {
+  padding: 16px 20px;
+  border-top: 0.5px solid var(--border);
+  display: none;
+  background: #FDFBF8;
+}
+
+.prep-panel.open { display: block; }
+
+.prep-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.prep-section-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brown-lt);
+  margin-bottom: 10px;
+}
+
+.prep-intake-item {
+  display: flex;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 0.5px solid var(--border);
+  font-size: 12px;
+}
+
+.prep-intake-item:last-child { border-bottom: none; }
+.prep-intake-label { color: var(--brown-lt); font-weight: 300; width: 90px; flex-shrink: 0; }
+.prep-intake-value { color: var(--brown); font-weight: 400; }
+
+.prep-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--amber-bg);
+  border: 1px solid var(--amber-bdr);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: var(--amber);
+  font-weight: 400;
+  margin-top: 8px;
+}
+
+/* Tongue photo placeholder */
+.tongue-photo-wrap {
+  background: var(--cream-dark);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.tongue-photo-header {
+  padding: 8px 12px;
+  background: var(--cream-mid);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--brown-lt);
+  border-bottom: 0.5px solid var(--border);
+}
+
+.tongue-photo-img {
+  height: 120px;
+  background: #F0E8DC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.tongue-photo-caption {
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--brown-lt);
+  font-weight: 300;
+}
+
+/* ─────────────────────────────────
+   ACTION BUTTONS
+───────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn-primary   { background: var(--terra); color: #fff; }
+.btn-primary:hover { background: var(--terra-dark); }
+
+.btn-secondary { background: var(--cream-dark); color: var(--brown-mid); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--cream-mid); border-color: var(--border-mid); }
+
+.btn-green   { background: var(--green); color: #fff; }
+.btn-green:hover { background: #3d6649; }
+
+.btn-outline-terra {
+  background: transparent;
+  color: var(--terra);
+  border: 1px solid rgba(193,103,58,0.3);
+}
+.btn-outline-terra:hover { background: var(--terra-light); }
+
+.btn-sm { padding: 6px 12px; font-size: 11px; }
+.btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(176,58,46,0.2); }
+.btn-danger:hover { background: rgba(176,58,46,0.15); }
+
+/* ─────────────────────────────────
+   REORDER CARDS
+───────────────────────────────── */
+.reorder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.reorder-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.reorder-card.flagged { border-color: var(--amber); }
+
+.reorder-header {
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 0.5px solid var(--border);
+  background: #FDFAF6;
+}
+
+.reorder-patient  { flex: 1; }
+.reorder-name     { font-size: 14px; font-weight: 500; color: var(--brown); margin-bottom: 2px; }
+.reorder-meta     { font-size: 12px; color: var(--brown-mid); font-weight: 300; }
+.reorder-received { font-size: 11px; color: var(--brown-lt); font-weight: 300; text-align: right; }
+
+.reorder-body {
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.reorder-formula-name {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--terra);
+  font-style: italic;
+  margin-bottom: 4px;
+}
+
+.reorder-formula-meta { font-size: 12px; color: var(--brown-mid); font-weight: 300; }
+.reorder-count        { font-size: 12px; color: var(--brown-lt); font-weight: 300; margin-top: 4px; }
+
+.reorder-actions {
+  padding: 12px 20px;
+  display: flex;
+  gap: 8px;
+  border-top: 0.5px solid var(--border);
+  background: #FDFAF6;
+}
+
+/* ─────────────────────────────────
+   DISPATCH TABLE
+───────────────────────────────── */
+.dispatch-table {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 32px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--white);
+}
+
+.dispatch-table th {
+  background: var(--cream-dark);
+  padding: 10px 16px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--brown-lt);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dispatch-table td {
+  padding: 11px 16px;
+  font-size: 13px;
+  color: var(--brown-mid);
+  border-bottom: 0.5px solid var(--border);
+  vertical-align: middle;
+}
+
+.dispatch-table tr:last-child td { border-bottom: none; }
+.dispatch-table td strong { color: var(--brown); font-weight: 500; }
+
+.dispatch-formula-pill {
+  display: inline-flex;
+  align-items: center;
+  background: var(--terra-light);
+  color: var(--terra);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  font-style: italic;
+  font-family: var(--serif);
+}
+
+.dispatch-status-sent    { color: var(--green); font-weight: 500; }
+.dispatch-status-pending { color: var(--amber); font-weight: 500; }
+
+/* ─────────────────────────────────
+   MODALS
+───────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(61,43,31,0.5);
+  backdrop-filter: blur(3px);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--cream);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(61,43,31,0.25);
+}
+
+.modal-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: sticky;
+  top: 0;
+  background: var(--cream);
+  z-index: 1;
+}
+
+.modal-title {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--brown);
+  line-height: 1.2;
+}
+
+.modal-title em { font-style: italic; color: var(--terra); }
+.modal-subtitle { font-size: 12px; color: var(--brown-mid); font-weight: 300; margin-top: 3px; }
+
+.modal-close {
+  background: none; border: none;
+  font-size: 20px; color: var(--brown-lt);
+  line-height: 1; padding: 0; margin-top: -2px;
+}
+
+.modal-body { padding: 20px 24px; }
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  background: var(--cream-dark);
+  border-radius: 0 0 16px 16px;
+}
+
+/* Form elements */
+.form-group { margin-bottom: 16px; }
+
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brown-lt);
+  margin-bottom: 6px;
+}
+
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--brown);
+  background: var(--white);
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus { border-color: var(--terra); }
+
+.form-textarea { resize: none; line-height: 1.6; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.form-hint { font-size: 11px; color: var(--muted); font-weight: 300; margin-top: 4px; }
+
+.total-row {
+  background: var(--cream-dark);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.total-label { font-size: 12px; color: var(--brown-mid); font-weight: 300; }
+.total-value { font-size: 16px; font-weight: 500; color: var(--brown); font-family: var(--serif); }
+
+/* ─────────────────────────────────
+   TONGUE COMPARISON (reorder review)
+───────────────────────────────── */
+.tongue-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.tongue-col-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--brown-lt);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.tongue-img {
+  height: 140px;
+  background: #F0E8DC;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+}
+
+.tongue-date {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 5px;
+  font-weight: 300;
+}
+
+/* ─────────────────────────────────
+   EMPTY STATES
+───────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 32px 20px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 32px;
+}
+
+.empty-icon  { font-size: 28px; margin-bottom: 10px; }
+.empty-title { font-family: var(--serif); font-size: 16px; font-weight: 400; color: var(--brown); margin-bottom: 4px; }
+.empty-sub   { font-size: 12px; color: var(--brown-mid); font-weight: 300; }
+
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ═══════════════════════════════════
+       SIDEBAR
+  ═══════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name">Justin Keane</div>
+      <div class="sidebar-brand-sub">Chinese Medicine — Dashboard</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Today</div>
+      <button class="nav-item active" onclick="showSection('overview')">
+        <span class="nav-icon">⊞</span> Overview
+      </button>
+      <button class="nav-item" onclick="showSection('consultations')">
+        <span class="nav-icon">☎</span> Consultations
+        <span class="nav-badge" id="badge-consult">3</span>
+      </button>
+      <button class="nav-item" onclick="showSection('reorders')">
+        <span class="nav-icon">↻</span> Reorder requests
+        <span class="nav-badge" id="badge-reorder">2</span>
+      </button>
+
+      <div class="sidebar-section-label">Records</div>
+      <button class="nav-item" onclick="showSection('dispatches')">
+        <span class="nav-icon">📦</span> Recent dispatches
+      </button>
+      <button class="nav-item" onclick="showSection('patients')">
+        <span class="nav-icon">♀</span> All patients
+      </button>
+
+      <div class="sidebar-section-label">Settings</div>
+      <button class="nav-item">
+        <span class="nav-icon">◷</span> Availability
+      </button>
+      <button class="nav-item">
+        <span class="nav-icon">⚙</span> Account settings
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar">JK</div>
+        <div>
+          <div class="sidebar-user-name">Dr Justin Keane</div>
+          <div class="sidebar-user-role">Practitioner of record</div>
+          <div class="sidebar-user-ahpra">CMR0001739870</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+
+  <!-- ═══════════════════════════════════
+       TOP BAR
+  ═══════════════════════════════════ -->
+  <header class="topbar">
+    <div>
+      <div class="topbar-title" id="page-title">Overview</div>
+      <div class="topbar-date" id="page-date">Friday, 25 April 2026</div>
+    </div>
+    <div class="topbar-right">
+      <button class="topbar-refresh">↻ Refresh</button>
+    </div>
+  </header>
+
+
+  <!-- ═══════════════════════════════════
+       MAIN CONTENT
+  ═══════════════════════════════════ -->
+  <main class="main">
+
+    <!-- ── OVERVIEW SECTION ── -->
+    <div id="section-overview">
+
+      <!-- Summary cards -->
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-card-label">Today's calls</div>
+          <div class="summary-card-value">3</div>
+          <div class="summary-card-sub">Next at 10:30 am</div>
+        </div>
+        <div class="summary-card alert">
+          <div class="summary-card-label">Awaiting action</div>
+          <div class="summary-card-value">2</div>
+          <div class="summary-card-sub">Reorder requests</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-label">Dispatched this week</div>
+          <div class="summary-card-value">5</div>
+          <div class="summary-card-sub">4 delivered, 1 in transit</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-label">Active patients</div>
+          <div class="summary-card-value">18</div>
+          <div class="summary-card-sub">Since launch</div>
+        </div>
+      </div>
+
+      <!-- Today's consultations -->
+      <div class="section-header">
+        <h2 class="section-title">Today's consultations</h2>
+        <button class="section-link" onclick="showSection('consultations')">View all →</button>
+      </div>
+
+      <div class="consult-list">
+
+        <!-- Consultation 1 — upcoming, prep available -->
+        <div class="consult-card">
+          <div class="consult-card-header" onclick="togglePrep('prep-1')">
+            <div class="consult-time-badge">
+              <div class="consult-time">10:30</div>
+              <div class="consult-ampm">am</div>
+            </div>
+            <div class="consult-patient">
+              <div class="consult-name">Sarah Mitchell</div>
+              <div class="consult-meta">Ages 18–34 &nbsp;·&nbsp; Irregular cycle &nbsp;·&nbsp; Hormonal acne, fatigue &nbsp;·&nbsp; New patient</div>
+            </div>
+            <span class="consult-status status-upcoming">Upcoming</span>
+            <span style="font-size:12px;color:var(--brown-lt);margin-left:8px;">▼</span>
+          </div>
+
+          <!-- Patient prep panel -->
+          <div class="prep-panel" id="prep-1">
+            <div class="prep-grid">
+              <!-- Intake summary -->
+              <div>
+                <p class="prep-section-label">Intake summary</p>
+                <div class="prep-intake-item">
+                  <span class="prep-intake-label">Age cohort</span>
+                  <span class="prep-intake-value">18–34</span>
+                </div>
+                <div class="prep-intake-item">
+                  <span class="prep-intake-label">Cycle</span>
+                  <span class="prep-intake-value">Irregular</span>
+                </div>
+                <div class="prep-intake-item">
+                  <span class="prep-intake-label">Main concerns</span>
+                  <span class="prep-intake-value">Hormones, skin, energy</span>
+                </div>
+                <div class="prep-intake-item">
+                  <span class="prep-intake-label">Energy</span>
+                  <span class="prep-intake-value">Wired but tired</span>
+                </div>
+                <div class="prep-intake-item">
+                  <span class="prep-intake-label">Temperature</span>
+                  <span class="prep-intake-value">Runs warm</span>
+                </div>
+                <div class="prep-intake-item">
+                  <span class="prep-intake-label">Pain zones</span>
+                  <span class="prep-intake-value">Lower left, deep pelvis</span>
+                </div>
+                <div class="prep-intake-item">
+                  <span class="prep-intake-label">Pain timing</span>
+                  <span class="prep-intake-value">Before period</span>
+                </div>
+                <div class="prep-intake-item">
+                  <span class="prep-intake-label">Medication</span>
+                  <span class="prep-intake-value">OTC pain relief</span>
+                </div>
+                <div class="prep-flag">⚑ Multiple concerns — complexity noted</div>
+              </div>
+
+              <!-- Tongue photo -->
+              <div>
+                <p class="prep-section-label">Tongue photo</p>
+                <div class="tongue-photo-wrap">
+                  <div class="tongue-photo-header">Uploaded today, 9:14 am</div>
+                  <div class="tongue-photo-img">👅</div>
+                  <div class="tongue-photo-caption">Tap to view full size</div>
+                </div>
+                <div style="margin-top:10px; font-size:12px; color:var(--brown-mid); font-weight:300; line-height:1.6;">
+                  Patient notes: "My periods have been getting heavier and more painful over the last year. Currently on the pill but it doesn't seem to be helping."
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="consult-actions">
+            <button class="btn btn-primary" onclick="openCompleteModal('Sarah Mitchell', '10:30 am')">✓ Mark complete</button>
+            <button class="btn btn-secondary" onclick="togglePrep('prep-1')">↕ View prep</button>
+          </div>
+        </div>
+
+        <!-- Consultation 2 — upcoming -->
+        <div class="consult-card">
+          <div class="consult-card-header" onclick="togglePrep('prep-2')">
+            <div class="consult-time-badge">
+              <div class="consult-time">10:45</div>
+              <div class="consult-ampm">am</div>
+            </div>
+            <div class="consult-patient">
+              <div class="consult-name">Priya Nair</div>
+              <div class="consult-meta">Ages 35–50 &nbsp;·&nbsp; Perimenopause &nbsp;·&nbsp; Sleep, mood, night sweats &nbsp;·&nbsp; New patient</div>
+            </div>
+            <span class="consult-status status-upcoming">Upcoming</span>
+            <span style="font-size:12px;color:var(--brown-lt);margin-left:8px;">▼</span>
+          </div>
+
+          <div class="prep-panel" id="prep-2">
+            <div class="prep-grid">
+              <div>
+                <p class="prep-section-label">Intake summary</p>
+                <div class="prep-intake-item"><span class="prep-intake-label">Age cohort</span><span class="prep-intake-value">35–50</span></div>
+                <div class="prep-intake-item"><span class="prep-intake-label">Cycle</span><span class="prep-intake-value">Changing or stopping</span></div>
+                <div class="prep-intake-item"><span class="prep-intake-label">Main concerns</span><span class="prep-intake-value">Sleep, energy, mood</span></div>
+                <div class="prep-intake-item"><span class="prep-intake-label">Energy</span><span class="prep-intake-value">Wired but tired</span></div>
+                <div class="prep-intake-item"><span class="prep-intake-label">Temperature</span><span class="prep-intake-value">Mixed — hot and cold</span></div>
+                <div class="prep-intake-item"><span class="prep-intake-label">Shen</span><span class="prep-intake-value">Can't fall asleep, mind racing</span></div>
+              </div>
+              <div>
+                <p class="prep-section-label">Tongue photo</p>
+                <div class="tongue-photo-wrap">
+                  <div class="tongue-photo-header">Uploaded today, 10:02 am</div>
+                  <div class="tongue-photo-img">👅</div>
+                  <div class="tongue-photo-caption">Tap to view full size</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="consult-actions">
+            <button class="btn btn-primary" onclick="openCompleteModal('Priya Nair', '10:45 am')">✓ Mark complete</button>
+            <button class="btn btn-secondary" onclick="togglePrep('prep-2')">↕ View prep</button>
+          </div>
+        </div>
+
+        <!-- Consultation 3 — complete, invoiced -->
+        <div class="consult-card">
+          <div class="consult-card-header">
+            <div class="consult-time-badge" style="background:var(--green-bg);border-color:var(--green-bdr);">
+              <div class="consult-time" style="color:var(--green)">7:00</div>
+              <div class="consult-ampm" style="color:var(--green)">pm</div>
+            </div>
+            <div class="consult-patient">
+              <div class="consult-name">Emma Thornton</div>
+              <div class="consult-meta">Ages 51+ &nbsp;·&nbsp; Post-menopause &nbsp;·&nbsp; Sleep, hot flushes &nbsp;·&nbsp; Return patient</div>
+            </div>
+            <span class="consult-status status-invoiced">Invoiced</span>
+          </div>
+          <div class="consult-actions">
+            <button class="btn btn-secondary btn-sm">View notes</button>
+            <button class="btn btn-secondary btn-sm" onclick="openDispatchModal('Emma Thornton', 'Deep &amp; Cool')">📦 Enter tracking number</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Reorder requests -->
+      <div class="section-header">
+        <h2 class="section-title">Reorder requests</h2>
+        <button class="section-link" onclick="showSection('reorders')">View all →</button>
+      </div>
+
+      <div class="reorder-list">
+
+        <!-- Reorder 1 — flagged -->
+        <div class="reorder-card flagged">
+          <div class="reorder-header">
+            <div class="reorder-patient">
+              <div class="reorder-name">Claire Watkins</div>
+              <div class="reorder-meta">Ages 18–34 &nbsp;·&nbsp; Reorder #2</div>
+            </div>
+            <div class="reorder-received">Received 2 hours ago</div>
+          </div>
+          <div class="reorder-body">
+            <div>
+              <p class="prep-section-label">Requesting reorder of</p>
+              <div class="reorder-formula-name">Harmonise & Chill</div>
+              <div class="reorder-formula-meta">Previous dosage: 1 tsp twice daily</div>
+              <div class="reorder-count">2 previous reorders</div>
+              <div class="prep-flag" style="margin-top:10px;">⚑ Reports intercourse pain since last formula</div>
+            </div>
+            <div>
+              <p class="prep-section-label">New tongue photo</p>
+              <div class="tongue-photo-wrap">
+                <div class="tongue-photo-header">Uploaded today</div>
+                <div class="tongue-photo-img">👅</div>
+              </div>
+            </div>
+          </div>
+          <div class="reorder-actions">
+            <button class="btn btn-green" onclick="openApproveModal('Claire Watkins', 'Harmonise &amp; Chill')">✓ Approve reorder</button>
+            <button class="btn btn-outline-terra" onclick="openReviewModal('Claire Watkins', 'Harmonise &amp; Chill')">👁 Full review</button>
+            <button class="btn btn-danger btn-sm" onclick="openDeclineModal('Claire Watkins')">Recommend follow-up</button>
+          </div>
+        </div>
+
+        <!-- Reorder 2 — straightforward -->
+        <div class="reorder-card">
+          <div class="reorder-header">
+            <div class="reorder-patient">
+              <div class="reorder-name">Melissa Okafor</div>
+              <div class="reorder-meta">Ages 51+ &nbsp;·&nbsp; Reorder #1</div>
+            </div>
+            <div class="reorder-received">Received yesterday</div>
+          </div>
+          <div class="reorder-body">
+            <div>
+              <p class="prep-section-label">Requesting reorder of</p>
+              <div class="reorder-formula-name">Deep</div>
+              <div class="reorder-formula-meta">Previous dosage: 1 tsp twice daily</div>
+              <div class="reorder-count">First reorder</div>
+            </div>
+            <div>
+              <p class="prep-section-label">New tongue photo</p>
+              <div class="tongue-photo-wrap">
+                <div class="tongue-photo-header">Uploaded yesterday</div>
+                <div class="tongue-photo-img">👅</div>
+              </div>
+            </div>
+          </div>
+          <div class="reorder-actions">
+            <button class="btn btn-green" onclick="openApproveModal('Melissa Okafor', 'Deep')">✓ Approve reorder</button>
+            <button class="btn btn-outline-terra" onclick="openReviewModal('Melissa Okafor', 'Deep')">👁 Full review</button>
+            <button class="btn btn-danger btn-sm" onclick="openDeclineModal('Melissa Okafor')">Recommend follow-up</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Recent dispatches -->
+      <div class="section-header">
+        <h2 class="section-title">Recent dispatches</h2>
+      </div>
+
+      <table class="dispatch-table">
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Formula</th>
+            <th>Dispatched</th>
+            <th>Tracking</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Emma Thornton</strong></td>
+            <td><span class="dispatch-formula-pill">Deep & Cool</span></td>
+            <td>Today</td>
+            <td style="color:var(--amber);font-weight:400;">Pending entry</td>
+            <td><span class="dispatch-status-pending">Awaiting tracking</span></td>
+            <td><button class="btn btn-secondary btn-sm" onclick="openDispatchModal('Emma Thornton','Deep &amp; Cool')">Add tracking</button></td>
+          </tr>
+          <tr>
+            <td><strong>Rachel Kim</strong></td>
+            <td><span class="dispatch-formula-pill">Yellow+</span></td>
+            <td>Wed 23 Apr</td>
+            <td>7L04559281000012345</td>
+            <td><span class="dispatch-status-sent">Sent</span></td>
+            <td><button class="btn btn-secondary btn-sm">View</button></td>
+          </tr>
+          <tr>
+            <td><strong>Anna Petrova</strong></td>
+            <td><span class="dispatch-formula-pill">Harmonise</span></td>
+            <td>Tue 22 Apr</td>
+            <td>7L04559281000067891</td>
+            <td><span class="dispatch-status-sent">Sent</span></td>
+            <td><button class="btn btn-secondary btn-sm">View</button></td>
+          </tr>
+          <tr>
+            <td><strong>Jessica Moore</strong></td>
+            <td><span class="dispatch-formula-pill">Build+</span></td>
+            <td>Mon 21 Apr</td>
+            <td>7L04559281000034567</td>
+            <td><span class="dispatch-status-sent">Sent</span></td>
+            <td><button class="btn btn-secondary btn-sm">View</button></td>
+          </tr>
+          <tr>
+            <td><strong>Sophie Chen</strong></td>
+            <td><span class="dispatch-formula-pill">Deep & Warm</span></td>
+            <td>Fri 18 Apr</td>
+            <td>7L04559281000089012</td>
+            <td><span class="dispatch-status-sent">Sent</span></td>
+            <td><button class="btn btn-secondary btn-sm">View</button></td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div><!-- end overview -->
+
+
+    <!-- ── OTHER SECTIONS (placeholders) ── -->
+    <div id="section-consultations" style="display:none">
+      <p style="color:var(--brown-mid);font-weight:300;">Full consultations view — coming soon.</p>
+    </div>
+    <div id="section-reorders" style="display:none">
+      <p style="color:var(--brown-mid);font-weight:300;">All reorder requests — coming soon.</p>
+    </div>
+    <div id="section-dispatches" style="display:none">
+      <p style="color:var(--brown-mid);font-weight:300;">Full dispatch history — coming soon.</p>
+    </div>
+    <div id="section-patients" style="display:none">
+      <p style="color:var(--brown-mid);font-weight:300;">All patients — coming soon.</p>
+    </div>
+
+  </main>
+</div>
+
+
+<!-- ═══════════════════════════════════
+     MODAL: COMPLETE CONSULTATION
+═══════════════════════════════════ -->
+<div class="modal-overlay" id="modal-complete">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Mark consultation <em>complete</em></div>
+        <div class="modal-subtitle" id="complete-patient-name">Sarah Mitchell — 10:30 am</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-complete')">×</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-group">
+        <label class="form-label">Pattern confirmed</label>
+        <select class="form-select">
+          <option value="">Select pattern...</option>
+          <optgroup label="18–34 cohort">
+            <option>Liver Qi Stagnation (Harmonise)</option>
+            <option>Liver Qi Stagnation + Heat (Harmonise & Chill)</option>
+            <option>Phlegm Damp (Yellow)</option>
+            <option>Phlegm Damp + Heat (Yellow & Chill)</option>
+            <option>Qi & Blood Deficiency (Build)</option>
+            <option>Gu Syndrome — mild (ReOrder Yellow)</option>
+          </optgroup>
+          <optgroup label="35–50 cohort">
+            <option>Harmonise+</option>
+            <option>Harmonise & Chill+</option>
+            <option>Yellow+</option>
+            <option>Yellow & Chill+</option>
+            <option>Build+</option>
+            <option>ReOrder Yellow+</option>
+          </optgroup>
+          <optgroup label="51+ cohort">
+            <option>Kidney Yin Deficiency (Deep)</option>
+            <option>Kidney Yin Deficiency + Heat (Deep & Cool)</option>
+            <option>Kidney Yang Deficiency (Deep & Warm)</option>
+          </optgroup>
+          <optgroup label="Redirect">
+            <option>Redirected to clinic — too complex</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Formula prescribed</label>
+        <select class="form-select" id="formula-select" onchange="updateFormulaName()">
+          <option value="">Select formula...</option>
+          <option>Harmonise</option>
+          <option>Harmonise & Chill</option>
+          <option>Yellow</option>
+          <option>Yellow & Chill</option>
+          <option>Build</option>
+          <option>ReOrder Yellow</option>
+          <option>Harmonise+</option>
+          <option>Harmonise & Chill+</option>
+          <option>Yellow+</option>
+          <option>Yellow & Chill+</option>
+          <option>Build+</option>
+          <option>ReOrder Yellow+</option>
+          <option>Deep</option>
+          <option>Deep & Cool</option>
+          <option>Deep & Warm</option>
+          <option>None — redirected to clinic</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Shen modifier</label>
+          <select class="form-select">
+            <option value="">None</option>
+            <option>+ Shen Heat (Huang Lian, Long Gu, Mu Li)</option>
+            <option>+ Shen Deficiency (Suan Zao Ren, Mai Dong, Wu Wei Zi)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Acne modifier</label>
+          <select class="form-select">
+            <option value="">None</option>
+            <option>+ Wu Wei Xiao Du Yin (50/50)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Clinical notes</label>
+        <textarea class="form-textarea" rows="4"
+          placeholder="Key findings from the call, tongue observations, any red flags or considerations..."></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Validity period</label>
+          <select class="form-select">
+            <option>4 weeks</option>
+            <option>6 weeks</option>
+            <option>8 weeks</option>
+            <option>12 weeks</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Recommended follow-up</label>
+          <input type="date" class="form-input">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Outcome</label>
+        <select class="form-select" id="outcome-select" onchange="toggleRedirectNote()">
+          <option value="formula">Formula to be prescribed — send invoice</option>
+          <option value="redirect">Redirected to clinic — refund consultation fee</option>
+        </select>
+      </div>
+
+      <div id="redirect-note" style="display:none;margin-top:4px;">
+        <div style="background:var(--amber-bg);border:1px solid var(--amber-bdr);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--amber);line-height:1.6;">
+          Selecting this will trigger an automatic refund of the $65 consultation fee and send the patient a warm message with a clinic booking link.
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-complete')">Cancel</button>
+      <button class="btn btn-primary" onclick="handleComplete()">✓ Mark complete & proceed to invoice</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════
+     MODAL: SEND INVOICE
+═══════════════════════════════════ -->
+<div class="modal-overlay" id="modal-invoice">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Send formula <em>invoice</em></div>
+        <div class="modal-subtitle" id="invoice-patient-name">Sarah Mitchell</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-invoice')">×</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-group">
+        <label class="form-label">Formula name</label>
+        <input type="text" class="form-input" id="invoice-formula" placeholder="e.g. Harmonise & Chill" readonly
+          style="background:var(--cream-dark);color:var(--terra);font-style:italic;font-family:var(--serif);font-size:16px;">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Dosage</label>
+          <input type="text" class="form-input" placeholder="e.g. 1 tsp twice daily">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Validity period</label>
+          <select class="form-select">
+            <option>4 weeks</option>
+            <option>6 weeks</option>
+            <option>8 weeks</option>
+            <option>12 weeks</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Formula cost ($)</label>
+          <input type="number" class="form-input" id="formula-cost" placeholder="0.00"
+            oninput="updateTotal()" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Postage ($)</label>
+          <input type="number" class="form-input" id="postage-cost" placeholder="0.00"
+            oninput="updateTotal()" step="0.01" min="0">
+          <p class="form-hint">Standard AusPost rate. Express add $5–8.</p>
+        </div>
+      </div>
+
+      <div class="total-row">
+        <span class="total-label">Total invoice amount (inc. GST)</span>
+        <span class="total-value" id="invoice-total">$0.00</span>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-invoice')">Cancel</button>
+      <button class="btn btn-primary" onclick="handleSendInvoice()">Send invoice to patient →</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════
+     MODAL: APPROVE REORDER
+═══════════════════════════════════ -->
+<div class="modal-overlay" id="modal-approve">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Approve <em>reorder</em></div>
+        <div class="modal-subtitle" id="approve-patient-name">Claire Watkins</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-approve')">×</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Tongue photo comparison -->
+      <div class="tongue-comparison">
+        <div>
+          <p class="tongue-col-label">Previous photo</p>
+          <div class="tongue-img">👅</div>
+          <p class="tongue-date">14 March 2026</p>
+        </div>
+        <div>
+          <p class="tongue-col-label">New photo (today)</p>
+          <div class="tongue-img">👅</div>
+          <p class="tongue-date">25 April 2026</p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Formula approved</label>
+        <input type="text" class="form-input" id="approve-formula"
+          style="background:var(--cream-dark);color:var(--terra);font-style:italic;font-family:var(--serif);font-size:16px;" readonly>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Formula cost ($)</label>
+          <input type="number" class="form-input" id="approve-formula-cost"
+            placeholder="0.00" oninput="updateApproveTotal()" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Postage ($)</label>
+          <input type="number" class="form-input" id="approve-postage-cost"
+            placeholder="0.00" oninput="updateApproveTotal()" step="0.01" min="0">
+        </div>
+      </div>
+
+      <div class="total-row">
+        <span class="total-label">Total invoice (inc. GST)</span>
+        <span class="total-value" id="approve-total">$0.00</span>
+      </div>
+
+      <div class="form-group" style="margin-top:14px;">
+        <label class="form-label">Clinical note (optional)</label>
+        <textarea class="form-textarea" rows="3"
+          placeholder="Any observations from the tongue comparison or patient notes..."></textarea>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-approve')">Cancel</button>
+      <button class="btn btn-green" onclick="handleApprove()">✓ Approve & send invoice</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════
+     MODAL: DECLINE / RECOMMEND FOLLOW-UP
+═══════════════════════════════════ -->
+<div class="modal-overlay" id="modal-decline">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Recommend <em>follow-up</em></div>
+        <div class="modal-subtitle" id="decline-patient-name">Claire Watkins</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-decline')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--brown-mid);font-weight:300;line-height:1.8;margin-bottom:16px;">
+        The patient will receive a warm message letting them know that based on their tongue photo and any updates they've shared, Dr Keane recommends a follow-up consultation before their next formula. A booking link will be included.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Reason (for your records only — not sent to patient)</label>
+        <textarea class="form-textarea" rows="3"
+          placeholder="e.g. Tongue showing increased heat signs, possible pattern shift — needs reassessment before continuing current formula..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-decline')">Cancel</button>
+      <button class="btn btn-danger" onclick="handleDecline()">Send follow-up recommendation</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════
+     MODAL: DISPATCH / TRACKING
+═══════════════════════════════════ -->
+<div class="modal-overlay" id="modal-dispatch">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Mark as <em>dispatched</em></div>
+        <div class="modal-subtitle" id="dispatch-patient-name">Emma Thornton</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-dispatch')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--brown-mid);font-weight:300;line-height:1.8;margin-bottom:16px;">
+        Entering a tracking number and clicking dispatch will send the patient their formula dispatch email with the Australia Post tracking link included.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Australia Post tracking number</label>
+        <input type="text" class="form-input"
+          placeholder="e.g. 7L04559281000012345"
+          style="letter-spacing:0.04em;font-size:14px;">
+        <p class="form-hint">Leave blank to send the dispatch email without tracking — you can add it later.</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-dispatch')">Cancel</button>
+      <button class="btn btn-primary" onclick="handleDispatch()">📦 Mark dispatched & send email</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════
+     MODAL: FULL REORDER REVIEW
+═══════════════════════════════════ -->
+<div class="modal-overlay" id="modal-review">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Full reorder <em>review</em></div>
+        <div class="modal-subtitle" id="review-patient-name">Claire Watkins</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-review')">×</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="tongue-comparison">
+        <div>
+          <p class="tongue-col-label">Previous photo — 14 Mar</p>
+          <div class="tongue-img">👅</div>
+        </div>
+        <div>
+          <p class="tongue-col-label">New photo — today</p>
+          <div class="tongue-img">👅</div>
+        </div>
+      </div>
+
+      <p class="prep-section-label" style="margin-bottom:10px;">Patient's reorder update</p>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+        <div class="prep-intake-item"><span class="prep-intake-label">Feeling vs before</span><span class="prep-intake-value">Mixed — some improvement</span></div>
+        <div class="prep-intake-item"><span class="prep-intake-label">What changed</span><span class="prep-intake-value">Skin is clearer but pelvic pain has increased</span></div>
+        <div class="prep-intake-item"><span class="prep-intake-label">New concern</span><span class="prep-intake-value">Pain during intercourse started 3 weeks ago</span></div>
+        <div class="prep-intake-item"><span class="prep-intake-label">Energy/temp</span><span class="prep-intake-value">Still running warm</span></div>
+        <div class="prep-flag">⚑ Intercourse pain — possible endometriosis indicator</div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-review')">Close</button>
+      <button class="btn btn-danger" onclick="closeModal('modal-review'); openDeclineModal('Claire Watkins')">Recommend follow-up</button>
+      <button class="btn btn-green" onclick="closeModal('modal-review'); openApproveModal('Claire Watkins','Harmonise &amp; Chill')">Approve reorder</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ─────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────
+function showSection(name) {
+  ['overview','consultations','reorders','dispatches','patients'].forEach(s => {
+    const el = document.getElementById('section-' + s);
+    if (el) el.style.display = s === name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  const titles = {
+    overview: 'Overview',
+    consultations: 'Consultations',
+    reorders: 'Reorder requests',
+    dispatches: 'Recent dispatches',
+    patients: 'All patients',
+  };
+  document.getElementById('page-title').textContent = titles[name] || name;
+}
+
+
+// ─────────────────────────────────────────
+// PREP PANELS
+// ─────────────────────────────────────────
+function togglePrep(id) {
+  const panel = document.getElementById(id);
+  panel.classList.toggle('open');
+}
+
+
+// ─────────────────────────────────────────
+// MODALS
+// ─────────────────────────────────────────
+function openCompleteModal(name, time) {
+  document.getElementById('complete-patient-name').textContent = name + ' — ' + time;
+  document.getElementById('modal-complete').classList.add('open');
+}
+
+function openInvoiceModal(name, formula) {
+  document.getElementById('invoice-patient-name').textContent = name;
+  document.getElementById('invoice-formula').value = formula || '';
+  document.getElementById('formula-cost').value = '';
+  document.getElementById('postage-cost').value = '';
+  document.getElementById('invoice-total').textContent = '$0.00';
+  document.getElementById('modal-invoice').classList.add('open');
+}
+
+function openApproveModal(name, formula) {
+  document.getElementById('approve-patient-name').textContent = name;
+  document.getElementById('approve-formula').value = formula || '';
+  document.getElementById('approve-formula-cost').value = '';
+  document.getElementById('approve-postage-cost').value = '';
+  document.getElementById('approve-total').textContent = '$0.00';
+  document.getElementById('modal-approve').classList.add('open');
+}
+
+function openDeclineModal(name) {
+  document.getElementById('decline-patient-name').textContent = name;
+  document.getElementById('modal-decline').classList.add('open');
+}
+
+function openDispatchModal(name, formula) {
+  document.getElementById('dispatch-patient-name').textContent = name + ' — ' + formula;
+  document.getElementById('modal-dispatch').classList.add('open');
+}
+
+function openReviewModal(name, formula) {
+  document.getElementById('review-patient-name').textContent = name + ' — ' + formula;
+  document.getElementById('modal-review').classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+});
+
+
+// ─────────────────────────────────────────
+// FORM LOGIC
+// ─────────────────────────────────────────
+function updateTotal() {
+  const formula  = parseFloat(document.getElementById('formula-cost').value)  || 0;
+  const postage  = parseFloat(document.getElementById('postage-cost').value)   || 0;
+  const total    = formula + postage;
+  document.getElementById('invoice-total').textContent = '$' + total.toFixed(2);
+}
+
+function updateApproveTotal() {
+  const formula = parseFloat(document.getElementById('approve-formula-cost').value) || 0;
+  const postage = parseFloat(document.getElementById('approve-postage-cost').value)  || 0;
+  document.getElementById('approve-total').textContent = '$' + (formula + postage).toFixed(2);
+}
+
+function toggleRedirectNote() {
+  const val  = document.getElementById('outcome-select').value;
+  const note = document.getElementById('redirect-note');
+  note.style.display = val === 'redirect' ? 'block' : 'none';
+}
+
+function updateFormulaName() {
+  const val = document.getElementById('formula-select').value;
+  document.getElementById('invoice-formula').value = val;
+}
+
+
+// ─────────────────────────────────────────
+// ACTION HANDLERS (prototype — show alerts)
+// In production: call backend API
+// ─────────────────────────────────────────
+function handleComplete() {
+  closeModal('modal-complete');
+  // In production: POST clinical note to Cliniko + platform DB
+  // Then open invoice modal
+  setTimeout(() => {
+    openInvoiceModal(
+      document.getElementById('complete-patient-name').textContent.split(' — ')[0],
+      document.getElementById('formula-select').value || ''
+    );
+  }, 200);
+}
+
+function handleSendInvoice() {
+  const total = document.getElementById('invoice-total').textContent;
+  closeModal('modal-invoice');
+  // In production: create Stripe Payment Link + send invoice email
+  alert('Invoice sent for ' + total + '. Patient will receive an email with payment link.');
+}
+
+function handleApprove() {
+  const total = document.getElementById('approve-total').textContent;
+  closeModal('modal-approve');
+  // In production: create Stripe Payment Link + send reorder invoice
+  alert('Reorder approved. Invoice sent for ' + total + '.');
+}
+
+function handleDecline() {
+  closeModal('modal-decline');
+  // In production: send patient follow-up recommendation email
+  alert('Follow-up recommendation sent to patient with booking link.');
+}
+
+function handleDispatch() {
+  closeModal('modal-dispatch');
+  // In production: update dispatch record + send dispatch email with tracking
+  alert('Marked as dispatched. Patient will receive their formula dispatch email.');
+}
+
+
+// ─────────────────────────────────────────
+// SET TODAY'S DATE
+// ─────────────────────────────────────────
+const today = new Date();
+document.getElementById('page-date').textContent = today.toLocaleDateString('en-AU', {
+  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+});
+</script>
+
+</body>
+</html>
