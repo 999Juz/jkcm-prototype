@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pain Assessment — Justin Keane Chinese Medicine</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream:      #FAF5ED;
+  --cream-dark: #F2E9D8;
+  --terra:      #C1673A;
+  --terra-dark: #A3522B;
+  --brown:      #3D2B1F;
+  --brown-mid:  #7A5C45;
+  --brown-lt:   #A07850;
+  --muted:      #8B6E54;
+  --border:     rgba(161,120,80,0.2);
+  --green:      #4A7C59;
+  --green-bg:   #F0F7F2;
+  --amber:      #A07020;
+  --amber-bg:   #FDF5E6;
+  --amber-bdr:  rgba(160,112,32,0.2);
+  --serif:      'Cormorant Garamond', serif;
+  --sans:       'DM Sans', sans-serif;
+}
+
+html, body {
+  font-family: var(--sans);
+  background: #E8E0D4;
+  color: var(--brown);
+  font-size: 16px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+button { font-family: var(--sans); cursor: pointer; }
+
+.app-shell {
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px;
+  min-height: 100vh;
+}
+
+.phone {
+  width: 390px;
+  background: var(--cream);
+  border-radius: 40px;
+  overflow: hidden;
+  box-shadow: 0 40px 80px rgba(61,43,31,0.2);
+  border: 1px solid rgba(161,120,80,0.15);
+}
+
+.notch {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cream);
+}
+
+.notch-bar { width: 110px; height: 4px; background: var(--border); border-radius: 2px; }
+
+nav {
+  background: rgba(250,245,237,0.96);
+  backdrop-filter: blur(8px);
+  border-bottom: 0.5px solid var(--border);
+  padding: 13px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-back { background: none; border: none; font-size: 13px; color: var(--terra); padding: 0; }
+.nav-brand { font-family: var(--serif); font-size: 15px; color: var(--brown-mid); }
+.nav-save  { background: none; border: none; font-size: 12px; color: var(--muted); padding: 0; }
+
+.progress-wrap { padding: 14px 24px 0; }
+.progress-row  { display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 11px; color: var(--brown-lt); }
+.progress-track { height: 3px; background: var(--cream-dark); border-radius: 2px; overflow: hidden; }
+.progress-fill  { height: 100%; width: 50%; background: var(--terra); border-radius: 2px; }
+
+.content { padding: 28px 24px 48px; }
+
+.step-tag { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--terra); margin-bottom: 10px; }
+.headline { font-family: var(--serif); font-size: 26px; font-weight: 400; line-height: 1.25; color: var(--brown); margin-bottom: 8px; }
+.headline em { font-style: italic; color: var(--terra); }
+.support-text { font-size: 13px; color: var(--brown-mid); font-weight: 300; line-height: 1.7; margin-bottom: 24px; }
+
+/* BODY MAP */
+.body-map-wrap {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.body-map-instruction {
+  font-size: 12px;
+  color: var(--brown-mid);
+  font-weight: 300;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.body-map-svg {
+  width: 100%;
+  max-width: 316px;
+  display: block;
+  margin: 0 auto;
+}
+
+.zone { cursor: pointer; transition: all 0.15s; }
+.zone:hover ellipse { fill: rgba(193,103,58,0.22); }
+
+.selected-zones-list {
+  margin-top: 14px;
+  padding: 12px;
+  background: var(--cream-dark);
+  border-radius: 8px;
+}
+
+.selected-zones-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--brown-lt);
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.selected-zones-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.zone-tag {
+  background: rgba(193,103,58,0.12);
+  border: 1px solid rgba(193,103,58,0.25);
+  color: var(--terra);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.zone-tag:hover { background: rgba(193,103,58,0.2); }
+
+.no-pain-btn {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 13px;
+  background: transparent;
+  font-size: 13px;
+  color: var(--brown-mid);
+  font-weight: 300;
+  text-align: center;
+  transition: all 0.15s;
+}
+
+.no-pain-btn.selected {
+  border-style: solid;
+  border-color: var(--green);
+  background: var(--green-bg);
+  color: var(--green);
+  font-weight: 400;
+}
+
+/* PAIN DETAIL SECTIONS */
+.pain-detail { display: none; }
+.pain-detail.visible { display: block; }
+
+.sub-section { margin-bottom: 22px; }
+.sub-title    { font-size: 14px; font-weight: 500; color: var(--brown); margin-bottom: 12px; line-height: 1.4; }
+
+.options-list { display: flex; flex-direction: column; gap: 8px; }
+
+.opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #fff;
+  text-align: left;
+  width: 100%;
+  transition: all 0.15s;
+  gap: 10px;
+}
+
+.opt:hover, .opt.selected { border-color: var(--terra); background: #FDF0E8; }
+.opt.selected-flag { border-color: var(--amber); background: var(--amber-bg); }
+
+.opt-label { font-size: 13px; font-weight: 400; color: var(--brown); flex: 1; line-height: 1.4; }
+
+.checkbox {
+  width: 22px; height: 22px; border-radius: 6px;
+  border: 1.5px solid var(--border);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: #fff;
+  transition: all 0.15s;
+}
+
+.opt.selected .checkbox { background: var(--terra); border-color: var(--terra); }
+.opt.selected-flag .checkbox { background: var(--amber); border-color: var(--amber); }
+
+.radio {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1.5px solid var(--border);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+
+.opt.selected .radio { background: var(--terra); border-color: var(--terra); }
+.opt.selected-flag .radio { background: var(--amber); border-color: var(--amber); }
+
+.radio-inner { width: 8px; height: 8px; border-radius: 50%; background: #fff; display: none; }
+.opt.selected .radio-inner,
+.opt.selected-flag .radio-inner { display: block; }
+
+.sensitive-note {
+  background: var(--cream-dark);
+  border-radius: 8px;
+  padding: 10px 13px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--brown-mid);
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+.flag-note {
+  background: var(--amber-bg);
+  border: 1px solid var(--amber-bdr);
+  border-radius: 8px;
+  padding: 10px 13px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--amber);
+  font-weight: 400;
+  line-height: 1.6;
+  display: none;
+}
+
+.flag-note.visible { display: block; }
+
+/* NOTES */
+.notes-section { margin-bottom: 24px; }
+.notes-label   { font-size: 14px; font-weight: 500; color: var(--brown); margin-bottom: 10px; line-height: 1.4; }
+.notes-optional { font-size: 12px; font-weight: 300; color: var(--muted); }
+.notes-input {
+  width: 100%; padding: 12px 15px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  font-family: var(--sans);
+  font-size: 14px; font-weight: 300;
+  color: var(--brown);
+  background: #fff;
+  outline: none; resize: none;
+  line-height: 1.6;
+}
+
+/* CONTINUE */
+.btn-continue {
+  display: block; width: 100%;
+  background: var(--cream-dark); color: var(--brown-lt);
+  font-size: 14px; font-weight: 500;
+  padding: 16px; border: none;
+  border-radius: 40px;
+  letter-spacing: 0.02em;
+  opacity: 0.55; cursor: default;
+  transition: background 0.2s, opacity 0.2s;
+  margin-bottom: 8px;
+}
+
+.btn-continue.ready {
+  background: var(--terra); color: #fff;
+  opacity: 1; cursor: pointer;
+}
+
+.btn-continue.ready:hover { background: var(--terra-dark); }
+
+.continue-hint {
+  text-align: center;
+  font-size: 12px; color: var(--muted);
+  font-weight: 300; line-height: 1.6;
+}
+
+@media (max-width: 480px) {
+  body { background: var(--cream); }
+  .app-shell { padding: 0; }
+  .phone { width: 100%; border-radius: 0; box-shadow: none; }
+  .notch { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+<div class="phone">
+  <div class="notch"><div class="notch-bar"></div></div>
+
+  <nav>
+    <button class="nav-back">← Back</button>
+    <span class="nav-brand">Justin Keane CM</span>
+    <button class="nav-save">Save & exit</button>
+  </nav>
+
+  <div class="progress-wrap">
+    <div class="progress-row">
+      <span>Step 3 of 6</span>
+      <span>Pain assessment</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill"></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <p class="step-tag">Tell us about your pain</p>
+    <h1 class="headline">Where do you experience <em>pain or discomfort?</em></h1>
+    <p class="support-text">This helps Dr Keane understand your pattern more clearly. Be as specific or general as you like — there are no wrong answers.</p>
+
+    <!-- BODY MAP -->
+    <div class="body-map-wrap">
+      <p class="body-map-instruction">Tap the areas where you experience pain</p>
+
+      <svg viewBox="0 0 316 340" xmlns="http://www.w3.org/2000/svg" class="body-map-svg">
+
+        <!-- Body outline -->
+        <path d="M 80 20 Q 80 10 158 8 Q 236 10 236 20 L 248 180 Q 252 220 245 260 Q 238 300 230 325 Q 220 338 158 340 Q 96 338 86 325 Q 78 300 71 260 Q 64 220 68 180 Z"
+          fill="#F5EDE0" stroke="rgba(161,120,80,0.25)" stroke-width="1"/>
+
+        <!-- Navel -->
+        <circle cx="158" cy="162" r="4" fill="rgba(161,120,80,0.3)"/>
+
+        <!-- Hip bones -->
+        <path d="M 88 240 Q 100 228 120 232" fill="none" stroke="rgba(161,120,80,0.2)" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M 228 240 Q 216 228 196 232" fill="none" stroke="rgba(161,120,80,0.2)" stroke-width="1.5" stroke-linecap="round"/>
+
+        <!-- Low back line -->
+        <line x1="114" y1="295" x2="202" y2="295" stroke="rgba(161,120,80,0.15)" stroke-width="1" stroke-dasharray="4,3"/>
+
+        <!-- Zone labels -->
+        <text x="158" y="72"  text-anchor="middle" font-family="DM Sans,sans-serif" font-size="9" fill="rgba(161,120,80,0.6)">Upper abdomen</text>
+        <text x="158" y="145" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="9" fill="rgba(161,120,80,0.6)">Mid abdomen</text>
+        <text x="158" y="198" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="9" fill="rgba(161,120,80,0.6)">Lower abdomen</text>
+        <text x="158" y="248" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="9" fill="rgba(161,120,80,0.6)">Pelvis</text>
+        <text x="158" y="290" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="9" fill="rgba(161,120,80,0.5)">Low back</text>
+
+        <!-- Interactive zones -->
+        <g class="zone" data-id="upper-left"  data-label="Upper left abdomen"  onclick="toggleZone(this)"><ellipse cx="108" cy="118" rx="36" ry="28" fill="rgba(193,103,58,0.08)" stroke="rgba(193,103,58,0.3)" stroke-width="1"/></g>
+        <g class="zone" data-id="upper-mid"   data-label="Upper centre"         onclick="toggleZone(this)"><ellipse cx="158" cy="112" rx="30" ry="22" fill="rgba(193,103,58,0.08)" stroke="rgba(193,103,58,0.3)" stroke-width="1"/></g>
+        <g class="zone" data-id="upper-right" data-label="Upper right abdomen" onclick="toggleZone(this)"><ellipse cx="208" cy="118" rx="36" ry="28" fill="rgba(193,103,58,0.08)" stroke="rgba(193,103,58,0.3)" stroke-width="1"/></g>
+        <g class="zone" data-id="mid-left"    data-label="Left side"            onclick="toggleZone(this)"><ellipse cx="100" cy="168" rx="32" ry="30" fill="rgba(193,103,58,0.08)" stroke="rgba(193,103,58,0.3)" stroke-width="1"/></g>
+        <g class="zone" data-id="navel"       data-label="Around the navel"     onclick="toggleZone(this)"><ellipse cx="158" cy="162" rx="28" ry="26" fill="rgba(193,103,58,0.08)" stroke="rgba(193,103,58,0.3)" stroke-width="1"/></g>
+        <g class="zone" data-id="mid-right"   data-label="Right side"           onclick="toggleZone(this)"><ellipse cx="216" cy="168" rx="32" ry="30" fill="rgba(193,103,58,0.08)" stroke="rgba(193,103,58,0.3)" stroke-width="1"/></g>
+        <g class="zone" data-id="lower-left"  data-label="Lower left"           onclick="toggleZone(this)"><ellipse cx="108" cy="218" rx="34" ry="28" fill="rgba(193,103,58,0.08)" stroke="rgba(193,103,58,0.3)" stroke-width="1"/></g>
+        <g class="zone" data-id="lower-mid"   data-label="Lower centre / pubic" onclick="toggleZone(this)"><ellipse cx="158" cy="222" rx="30" ry="26" fill="rgba(193,103,58,0.08)" stroke="rgba(193,103,58,0.3)" stroke-width="1"/></g>
+        <g class="zone" data-id="lower-right" data-label="Lower right"          onclick="toggleZone(this)"><ellipse cx="208" cy="218" rx="34" ry="28" fill="rgba(193,103,58,0.08)" stroke="rgba(193,103,58,0.3)" stroke-width="1"/></g>
+        <g class="zone" data-id="deep-left"   data-label="Deep left pelvis"     onclick="toggleZone(this)"><ellipse cx="118" cy="262" rx="28" ry="22" fill="rgba(193,103,58,0.08)" stroke="rgba(193,103,58,0.3)" stroke-width="1"/></g>
+        <g class="zone" data-id="deep-mid"    data-label="Deep central pelvis"  onclick="toggleZone(this)"><ellipse cx="158" cy="268" rx="26" ry="20" fill="rgba(193,103,58,0.08)" stroke="rgba(193,103,58,0.3)" stroke-width="1"/></g>
+        <g class="zone" data-id="deep-right"  data-label="Deep right pelvis"    onclick="toggleZone(this)"><ellipse cx="198" cy="262" rx="28" ry="22" fill="rgba(193,103,58,0.08)" stroke="rgba(193,103,58,0.3)" stroke-width="1"/></g>
+        <g class="zone" data-id="low-back"    data-label="Low back"             onclick="toggleZone(this)"><ellipse cx="158" cy="305" rx="44" ry="18" fill="rgba(193,103,58,0.08)" stroke="rgba(193,103,58,0.3)" stroke-width="1"/></g>
+      </svg>
+
+      <div class="selected-zones-list" id="selected-zones-list" style="display:none">
+        <p class="selected-zones-label" id="zones-count">0 areas selected:</p>
+        <div class="selected-zones-tags" id="zones-tags"></div>
+      </div>
+
+      <button class="no-pain-btn" id="no-pain-btn" onclick="toggleNoPain()">
+        I don't experience pain in these areas
+      </button>
+    </div>
+
+    <!-- PAIN DETAIL — shown after zones selected -->
+    <div class="pain-detail" id="pain-detail">
+
+      <!-- Pain nature -->
+      <div class="sub-section">
+        <p class="sub-title">How would you describe the pain?</p>
+        <div class="options-list">
+          <button class="opt" onclick="toggleMulti(this,'nature')"><span class="opt-label">Sharp or stabbing</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'nature')"><span class="opt-label">Dull or achy</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'nature')"><span class="opt-label">Cramping</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'nature')"><span class="opt-label">Burning</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'nature')"><span class="opt-label">Heavy pressure or fullness</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'nature')"><span class="opt-label">Throbbing</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'nature')" data-flag="true"><span class="opt-label">Constant — always there</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'nature')"><span class="opt-label">Comes and goes</span><div class="checkbox"></div></button>
+        </div>
+      </div>
+
+      <!-- Cycle timing -->
+      <div class="sub-section">
+        <p class="sub-title">When in your cycle does it tend to occur?</p>
+        <div class="options-list" data-single="timing">
+          <button class="opt" onclick="selectSingle(this,'timing')"><span class="opt-label">Before my period</span><div class="radio"><div class="radio-inner"></div></div></button>
+          <button class="opt" onclick="selectSingle(this,'timing')"><span class="opt-label">During my period</span><div class="radio"><div class="radio-inner"></div></div></button>
+          <button class="opt" onclick="selectSingle(this,'timing')"><span class="opt-label">After my period</span><div class="radio"><div class="radio-inner"></div></div></button>
+          <button class="opt" onclick="selectSingle(this,'timing')"><span class="opt-label">Mid-cycle (around ovulation)</span><div class="radio"><div class="radio-inner"></div></div></button>
+          <button class="opt" onclick="selectSingle(this,'timing')"><span class="opt-label">No relationship to my cycle</span><div class="radio"><div class="radio-inner"></div></div></button>
+          <button class="opt" onclick="selectSingle(this,'timing')"><span class="opt-label">Not sure</span><div class="radio"><div class="radio-inner"></div></div></button>
+        </div>
+      </div>
+
+      <!-- Radiation -->
+      <div class="sub-section">
+        <p class="sub-title">Does the pain stay in one place or move?</p>
+        <div class="options-list" data-single="radiation">
+          <button class="opt" onclick="selectSingle(this,'radiation')"><span class="opt-label">Stays in one place</span><div class="radio"><div class="radio-inner"></div></div></button>
+          <button class="opt" onclick="selectSingle(this,'radiation')" data-flag="true"><span class="opt-label">Radiates to my low back</span><div class="radio"><div class="radio-inner"></div></div></button>
+          <button class="opt" onclick="selectSingle(this,'radiation')" data-flag="true"><span class="opt-label">Radiates down my legs</span><div class="radio"><div class="radio-inner"></div></div></button>
+          <button class="opt" onclick="selectSingle(this,'radiation')"><span class="opt-label">Varies — moves around</span><div class="radio"><div class="radio-inner"></div></div></button>
+        </div>
+      </div>
+
+      <!-- Better with -->
+      <div class="sub-section">
+        <p class="sub-title">What tends to make it better?</p>
+        <div class="options-list">
+          <button class="opt" onclick="toggleMulti(this,'better')"><span class="opt-label">Heat (hot water bottle, warm bath)</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'better')"><span class="opt-label">Cold</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'better')"><span class="opt-label">Rest</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'better')"><span class="opt-label">Movement or walking</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'better')"><span class="opt-label">Firm pressure</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'better')"><span class="opt-label">Nothing helps</span><div class="checkbox"></div></button>
+        </div>
+      </div>
+
+      <!-- Worse with -->
+      <div class="sub-section">
+        <p class="sub-title">What tends to make it worse?</p>
+        <div class="options-list">
+          <button class="opt" onclick="toggleMulti(this,'worse')"><span class="opt-label">Cold</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'worse')"><span class="opt-label">Stress</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'worse')"><span class="opt-label">Movement</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'worse')"><span class="opt-label">Sitting or lying down</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'worse')"><span class="opt-label">After eating</span><div class="checkbox"></div></button>
+          <button class="opt" onclick="toggleMulti(this,'worse')"><span class="opt-label">During my period</span><div class="checkbox"></div></button>
+        </div>
+      </div>
+
+      <!-- Intercourse pain -->
+      <div class="sub-section">
+        <p class="sub-title">Do you experience pain during or after intercourse?</p>
+        <div class="sensitive-note">
+          This is a clinically important question. Your answer is seen only by Dr Keane and is never shared.
+        </div>
+        <div class="options-list" data-single="intercourse">
+          <button class="opt" onclick="selectSingle(this,'intercourse')"><span class="opt-label">No</span><div class="radio"><div class="radio-inner"></div></div></button>
+          <button class="opt" onclick="selectSingle(this,'intercourse')"><span class="opt-label">Sometimes</span><div class="radio"><div class="radio-inner"></div></div></button>
+          <button class="opt" onclick="selectSingle(this,'intercourse')" data-flag="true"><span class="opt-label">Yes</span><div class="radio"><div class="radio-inner"></div></div></button>
+          <button class="opt" onclick="selectSingle(this,'intercourse')"><span class="opt-label">Not applicable</span><div class="radio"><div class="radio-inner"></div></div></button>
+          <button class="opt" onclick="selectSingle(this,'intercourse')"><span class="opt-label">Prefer not to say</span><div class="radio"><div class="radio-inner"></div></div></button>
+        </div>
+      </div>
+
+      <!-- Medication -->
+      <div class="sub-section">
+        <p class="sub-title">Do you use pain medication to manage this?</p>
+        <div class="options-list" data-single="medication">
+          <button class="opt" onclick="selectSingle(this,'medication')"><span class="opt-label">I don't use pain medication for this</span><div class="radio"><div class="radio-inner"></div></div></button>
+          <button class="opt" onclick="selectSingle(this,'medication')"><span class="opt-label">Over-the-counter (ibuprofen, paracetamol)</span><div class="radio"><div class="radio-inner"></div></div></button>
+          <button class="opt" onclick="selectSingle(this,'medication')" data-flag="true"><span class="opt-label">Prescription pain medication</span><div class="radio"><div class="radio-inner"></div></div></button>
+        </div>
+        <div class="flag-note" id="medication-flag">
+          Dr Keane will discuss your pain management on the call. Please have the name of your medication ready.
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="notes-section">
+        <p class="notes-label">
+          Anything else about your pain you'd like Dr Keane to know?
+          <span class="notes-optional"> (optional)</span>
+        </p>
+        <textarea class="notes-input" rows="3" placeholder="e.g. it started after my second pregnancy, or it only happens in winter..."></textarea>
+      </div>
+
+    </div>
+
+    <!-- CONTINUE -->
+    <button class="btn-continue" id="continue-btn">Continue</button>
+    <p class="continue-hint" id="continue-hint">Please indicate your pain areas above, or select "I don't experience pain in these areas"</p>
+
+  </div>
+</div>
+</div>
+
+<script>
+const selectedZones = new Set();
+let noPain = false;
+
+function toggleZone(el) {
+  if (noPain) return;
+  const id    = el.dataset.id;
+  const label = el.dataset.label;
+  const ellipse = el.querySelector('ellipse');
+
+  if (selectedZones.has(id)) {
+    selectedZones.delete(id);
+    ellipse.setAttribute('fill', 'rgba(193,103,58,0.08)');
+    ellipse.setAttribute('stroke', 'rgba(193,103,58,0.3)');
+    ellipse.setAttribute('stroke-width', '1');
+  } else {
+    selectedZones.add(id);
+    ellipse.setAttribute('fill', 'rgba(193,103,58,0.45)');
+    ellipse.setAttribute('stroke', '#C1673A');
+    ellipse.setAttribute('stroke-width', '1.5');
+  }
+  updateZoneDisplay();
+}
+
+function updateZoneDisplay() {
+  const list = document.getElementById('selected-zones-list');
+  const tags = document.getElementById('zones-tags');
+  const count = document.getElementById('zones-count');
+  const detail = document.getElementById('pain-detail');
+  const continueBtn = document.getElementById('continue-btn');
+  const hint = document.getElementById('continue-hint');
+
+  if (selectedZones.size > 0) {
+    list.style.display = 'block';
+    count.textContent = selectedZones.size + ' area' + (selectedZones.size > 1 ? 's' : '') + ' selected:';
+    tags.innerHTML = '';
+    selectedZones.forEach(id => {
+      const el = document.querySelector(`[data-id="${id}"]`);
+      if (el) {
+        const tag = document.createElement('button');
+        tag.className = 'zone-tag';
+        tag.textContent = el.dataset.label + ' ×';
+        tag.onclick = () => { toggleZone(el); };
+        tags.appendChild(tag);
+      }
+    });
+    detail.classList.add('visible');
+    continueBtn.classList.add('ready');
+    hint.style.display = 'none';
+  } else {
+    list.style.display = 'none';
+    detail.classList.remove('visible');
+    if (!noPain) {
+      continueBtn.classList.remove('ready');
+      hint.style.display = 'block';
+    }
+  }
+}
+
+function toggleNoPain() {
+  noPain = !noPain;
+  const btn = document.getElementById('no-pain-btn');
+  const detail = document.getElementById('pain-detail');
+  const continueBtn = document.getElementById('continue-btn');
+  const hint = document.getElementById('continue-hint');
+
+  if (noPain) {
+    // Clear all zone selections
+    selectedZones.forEach(id => {
+      const el = document.querySelector(`[data-id="${id}"]`);
+      if (el) {
+        const ellipse = el.querySelector('ellipse');
+        ellipse.setAttribute('fill', 'rgba(193,103,58,0.08)');
+        ellipse.setAttribute('stroke', 'rgba(193,103,58,0.3)');
+        ellipse.setAttribute('stroke-width', '1');
+      }
+    });
+    selectedZones.clear();
+    document.getElementById('selected-zones-list').style.display = 'none';
+    btn.classList.add('selected');
+    btn.textContent = '✓  I don\'t experience pain in these areas';
+    detail.classList.remove('visible');
+    continueBtn.classList.add('ready');
+    hint.style.display = 'none';
+  } else {
+    btn.classList.remove('selected');
+    btn.textContent = 'I don\'t experience pain in these areas';
+    continueBtn.classList.remove('ready');
+    hint.style.display = 'block';
+  }
+}
+
+function toggleMulti(btn, group) {
+  const isFlag = btn.dataset.flag === 'true';
+  btn.classList.toggle('selected');
+  if (isFlag && btn.classList.contains('selected')) {
+    btn.classList.add('selected-flag');
+    btn.classList.remove('selected');
+  } else if (isFlag) {
+    btn.classList.remove('selected-flag');
+  }
+  const check = btn.querySelector('.checkbox');
+  if (check) {
+    check.textContent = (btn.classList.contains('selected') || btn.classList.contains('selected-flag')) ? '✓' : '';
+  }
+  // Show medication flag note
+  if (group === 'medication') checkMedicationFlag();
+}
+
+function selectSingle(btn, group) {
+  const parent = btn.parentElement;
+  parent.querySelectorAll('.opt').forEach(b => {
+    b.classList.remove('selected', 'selected-flag');
+    const r = b.querySelector('.radio-inner');
+    if (r) r.style.display = 'none';
+  });
+  const isFlag = btn.dataset.flag === 'true';
+  btn.classList.add(isFlag ? 'selected-flag' : 'selected');
+  const radioInner = btn.querySelector('.radio-inner');
+  if (radioInner) radioInner.style.display = 'block';
+
+  if (group === 'medication') checkMedicationFlag();
+}
+
+function checkMedicationFlag() {
+  const flagNote = document.getElementById('medication-flag');
+  const prescriptionBtn = document.querySelector('[data-flag="true"][onclick*="medication"]');
+  if (prescriptionBtn && (prescriptionBtn.classList.contains('selected') || prescriptionBtn.classList.contains('selected-flag'))) {
+    flagNote.classList.add('visible');
+  } else {
+    flagNote.classList.remove('visible');
+  }
+}
+
+document.getElementById('continue-btn').addEventListener('click', function() {
+  if (this.classList.contains('ready')) {
+    alert('Pain data captured — continuing to next question.');
+  }
+});
+</script>
+
+</body>
+</html>
