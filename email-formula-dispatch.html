@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Formula Is On Its Way — Justin Keane Chinese Medicine</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!--
+  email-formula-dispatch.html
+  Justin Keane Chinese Medicine — Women's Health Platform
+
+  FORMULA DISPATCH EMAIL
+  Sent after Dr Keane has prepared and posted the patient's
+  herbal formula. This email is NOT sent by Cliniko —
+  it must be triggered manually or via a backend workflow.
+
+  INTEGRATION NOTES — for Peter Nguyen Brown:
+  ─────────────────────────────────────────────
+  TRIGGER:
+    This email is triggered by Dr Keane clicking a
+    "Mark as dispatched" button in the practitioner
+    dashboard (to be built — see PractitionerDashboard.html).
+    On click, the backend calls SendGrid/Postmark to send
+    this template to the patient's email address.
+
+  SENDGRID / POSTMARK SETUP:
+    1. Create a new template in your email provider
+    2. Paste the HTML below as the template body
+    3. Replace placeholder tags with your provider's
+       merge tag syntax
+    4. Store the template ID in your environment variables
+       e.g. FORMULA_DISPATCH_TEMPLATE_ID=d-xxxxxxxx
+
+  DYNAMIC FIELDS TO REPLACE WITH MERGE TAGS:
+    [PATIENT_FIRST_NAME]  — patient's first name
+    [FORMULA_NAME]        — e.g. "Harmonise" or "Deep & Cool"
+    [CONSULTATION_DATE]   — date of the phone consultation
+    [TRACKING_NUMBER]     — Australia Post tracking number (if available)
+    [TRACKING_URL]        — Australia Post tracking URL (if available)
+    [VALIDITY_PERIOD]     — e.g. "4 weeks" or "6 weeks"
+    [DOSAGE_INSTRUCTIONS] — e.g. "1 teaspoon twice daily in hot water"
+    [FOLLOW_UP_DATE]      — recommended follow-up date
+
+  NOTE ON TRACKING:
+    If you have an Australia Post business account, tracking
+    numbers can be generated via the AusPost API and included
+    automatically. If not, Dr Keane can enter the tracking
+    number manually in the practitioner dashboard before
+    clicking dispatch.
+
+  VERSION: 1.0
+  ─────────────────────────────────────────────
+-->
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont,
+               'Segoe UI', Helvetica, Arial, sans-serif;
+  background: #E8E0D4;
+  color: #3D2B1F;
+  font-size: 16px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+.email-wrapper {
+  max-width: 560px;
+  margin: 40px auto;
+  background: #FAF5ED;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(61,43,31,0.12);
+}
+
+.email-header {
+  background: #F2E9D8;
+  padding: 28px 40px 24px;
+  border-bottom: 1px solid rgba(161,120,80,0.2);
+  text-align: center;
+}
+
+.brand-name {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: #3D2B1F;
+  margin-bottom: 2px;
+}
+
+.brand-sub {
+  font-size: 10px;
+  font-weight: 300;
+  color: #A07850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Terracotta dispatch banner */
+.dispatch-banner {
+  background: rgba(193,103,58,0.08);
+  border-bottom: 1px solid rgba(193,103,58,0.15);
+  padding: 26px 40px;
+  text-align: center;
+}
+
+.dispatch-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.dispatch-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 26px;
+  font-weight: 400;
+  color: #3D2B1F;
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.dispatch-title em { font-style: italic; color: #C1673A; }
+
+.dispatch-sub {
+  font-size: 13px;
+  color: #7A5C45;
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+.email-body { padding: 30px 40px; }
+
+.greeting { font-size: 15px; color: #3D2B1F; margin-bottom: 12px; font-weight: 400; }
+.body-text { font-size: 14px; color: #7A5C45; font-weight: 300; line-height: 1.8; margin-bottom: 12px; }
+.body-text strong { font-weight: 500; color: #3D2B1F; }
+
+/* Formula card */
+.formula-card {
+  background: #fff;
+  border: 1px solid rgba(161,120,80,0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 20px 0;
+}
+
+.formula-card-header {
+  background: #F2E9D8;
+  padding: 11px 18px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #A07850;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(161,120,80,0.2);
+}
+
+.formula-name-row {
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(161,120,80,0.12);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.formula-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #C1673A;
+  flex-shrink: 0;
+}
+
+.formula-name {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: #C1673A;
+  font-style: italic;
+}
+
+.details-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 10px 18px;
+  border-bottom: 1px solid rgba(161,120,80,0.12);
+  font-size: 13px;
+}
+
+.details-row:last-child { border-bottom: none; }
+.details-label { color: #A07850; font-weight: 300; flex-shrink: 0; margin-right: 12px; }
+.details-value { color: #3D2B1F; font-weight: 400; text-align: right; }
+
+/* Tracking card */
+.tracking-card {
+  background: #F0F7F2;
+  border: 1px solid rgba(74,124,89,0.2);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 20px 0;
+}
+
+.tracking-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #4A7C59;
+  margin-bottom: 8px;
+}
+
+.tracking-number {
+  font-size: 15px;
+  font-weight: 500;
+  color: #3D2B1F;
+  margin-bottom: 8px;
+  letter-spacing: 0.04em;
+}
+
+.tracking-link {
+  display: inline-block;
+  background: #4A7C59;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: 20px;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+/* Instructions card */
+.instructions-card {
+  background: #fff;
+  border: 1px solid rgba(161,120,80,0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 20px 0;
+}
+
+.instructions-header {
+  background: #F2E9D8;
+  padding: 11px 18px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #A07850;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(161,120,80,0.2);
+}
+
+.instruction-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 13px 18px;
+  border-bottom: 1px solid rgba(161,120,80,0.1);
+  font-size: 13px;
+  color: #7A5C45;
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+.instruction-item:last-child { border-bottom: none; }
+
+.instruction-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #F2E9D8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 13px;
+  color: #C1673A;
+  font-weight: 400;
+  margin-top: 1px;
+}
+
+/* Amber note */
+.amber-note {
+  background: #FDF5E6;
+  border: 1px solid rgba(160,112,32,0.2);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 18px 0;
+  font-size: 13px;
+  color: #A07020;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.amber-note strong { font-weight: 500; }
+
+.divider { border: none; border-top: 1px solid rgba(161,120,80,0.15); margin: 20px 0; }
+
+/* Follow up card */
+.followup-card {
+  background: rgba(193,103,58,0.06);
+  border: 1px solid rgba(193,103,58,0.15);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 20px 0;
+}
+
+.followup-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #C1673A;
+  margin-bottom: 6px;
+}
+
+.followup-text {
+  font-size: 13px;
+  color: #7A5C45;
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+.email-footer {
+  background: #F2E9D8;
+  padding: 22px 40px;
+  border-top: 1px solid rgba(161,120,80,0.2);
+  text-align: center;
+}
+
+.footer-text { font-size: 12px; color: #A07850; font-weight: 300; line-height: 1.7; margin-bottom: 6px; }
+.footer-link { color: #C1673A; text-decoration: none; }
+.footer-ahpra { font-size: 11px; color: #8B6E54; font-weight: 300; margin-top: 8px; }
+
+@media (max-width: 600px) {
+  .email-wrapper { margin: 0; border-radius: 0; }
+  .email-header, .email-body, .email-footer, .dispatch-banner { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="email-wrapper">
+
+  <!-- HEADER -->
+  <div class="email-header">
+    <div class="brand-name">Justin Keane Chinese Medicine</div>
+    <div class="brand-sub">Women's Health Platform</div>
+  </div>
+
+  <!-- DISPATCH BANNER -->
+  <div class="dispatch-banner">
+    <span class="dispatch-icon">📦</span>
+    <h1 class="dispatch-title">Your formula is <em>on its way.</em></h1>
+    <p class="dispatch-sub">
+      Dr Keane has prepared and posted your personalised herbal formula.
+    </p>
+  </div>
+
+  <!-- BODY -->
+  <div class="email-body">
+
+    <p class="greeting">Hi [PATIENT_FIRST_NAME],</p>
+
+    <p class="body-text">
+      Great news — your herbal formula has been prepared and posted from our Heathmont clinic. Here are the details.
+    </p>
+
+    <!-- FORMULA CARD -->
+    <div class="formula-card">
+      <div class="formula-card-header">Your formula</div>
+      <div class="formula-name-row">
+        <div class="formula-dot"></div>
+        <span class="formula-name">[FORMULA_NAME]</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">Prescribed by</span>
+        <span class="details-value">Dr Justin Keane</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">Consultation date</span>
+        <span class="details-value">[CONSULTATION_DATE]</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">Valid for</span>
+        <span class="details-value">[VALIDITY_PERIOD]</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">Dosage</span>
+        <span class="details-value">[DOSAGE_INSTRUCTIONS]</span>
+      </div>
+    </div>
+
+    <!-- TRACKING — shown if tracking number available -->
+    <div class="tracking-card">
+      <p class="tracking-label">Australia Post tracking</p>
+      <p class="tracking-number">[TRACKING_NUMBER]</p>
+      <a href="[TRACKING_URL]" class="tracking-link">Track your parcel →</a>
+    </div>
+
+    <!-- PREPARATION INSTRUCTIONS -->
+    <div class="instructions-card">
+      <div class="instructions-header">How to prepare your formula</div>
+      <div class="instruction-item">
+        <div class="instruction-num">1</div>
+        <span>Add <strong style="color:#3D2B1F;font-weight:500;">[DOSAGE_INSTRUCTIONS]</strong> of the granules to a mug.</span>
+      </div>
+      <div class="instruction-item">
+        <div class="instruction-num">2</div>
+        <span>Pour freshly boiled water over the granules and stir until fully dissolved. The granules dissolve quickly.</span>
+      </div>
+      <div class="instruction-item">
+        <div class="instruction-num">3</div>
+        <span>Drink while warm, ideally 30 minutes before meals or as directed by Dr Keane on your call.</span>
+      </div>
+      <div class="instruction-item">
+        <div class="instruction-num">4</div>
+        <span>Store the remaining granules in a cool, dry place away from direct sunlight. Keep the lid tightly closed.</span>
+      </div>
+    </div>
+
+    <!-- AMBER NOTE -->
+    <div class="amber-note">
+      <strong>Please note:</strong> If you experience any unexpected reactions — nausea, digestive discomfort, skin changes or anything unusual — stop taking the formula and contact us immediately on (03) 9729 9333. Do not take more than the prescribed dose.
+    </div>
+
+    <hr class="divider">
+
+    <!-- WHAT TO EXPECT -->
+    <p class="body-text">
+      Chinese herbal formulas work gradually. Most patients begin to notice changes within <strong>2–4 weeks</strong> for acute presentations, or <strong>6–8 weeks</strong> for longer-standing hormonal patterns. Consistency is important — try to take your formula at the same time each day.
+    </p>
+
+    <p class="body-text">
+      Your formula is appropriate for the period Dr Keane advised on your call. As your pattern shifts, the formula may need to be adjusted. Please book a follow-up consultation before reordering.
+    </p>
+
+    <!-- FOLLOW UP -->
+    <div class="followup-card">
+      <p class="followup-label">Recommended follow-up</p>
+      <p class="followup-text">
+        Dr Keane recommends a follow-up consultation around <strong style="color:#3D2B1F;font-weight:500;">[FOLLOW_UP_DATE]</strong> to review your progress and adjust your formula if needed. You can book directly through the platform.
+      </p>
+    </div>
+
+    <hr class="divider">
+
+    <p class="body-text">
+      If you have any questions about your formula, preparation or how you're feeling, please don't hesitate to get in touch.
+    </p>
+
+    <p style="font-size:14px; color:#3D2B1F; margin-top:20px; font-weight:400;">
+      Warm regards,<br>
+      <strong>Dr Justin Keane</strong><br>
+      <span style="font-size:13px; color:#A07850; font-weight:300;">
+        Justin Keane Chinese Medicine<br>
+        (03) 9729 9333 &nbsp;·&nbsp;
+        <a href="mailto:info@heathmontchinesemedicine.com.au"
+           style="color:#C1673A; text-decoration:none;">
+          info@heathmontchinesemedicine.com.au
+        </a>
+      </span>
+    </p>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="email-footer">
+    <p class="footer-text">
+      Justin Keane Chinese Medicine &nbsp;·&nbsp;
+      2/103 Canterbury Road, Heathmont VIC 3135<br>
+      <a href="https://justinkeanechinesemedicine.com/TermsOfService.html"
+         class="footer-link">Terms of Service</a>
+      &nbsp;·&nbsp;
+      <a href="https://justinkeanechinesemedicine.com/PrivacyPolicy.html"
+         class="footer-link">Privacy Policy</a>
+    </p>
+    <p class="footer-ahpra">
+      Dr Justin Keane &nbsp;·&nbsp;
+      Registered Chinese Medicine Practitioner &nbsp;·&nbsp;
+      AHPRA: CMR0001739870
+    </p>
+  </div>
+
+</div>
+
+<!--
+  ═══════════════════════════════════════════════════════
+  PLAIN TEXT VERSION (fallback for email clients
+  that don't render HTML)
+  ═══════════════════════════════════════════════════════
+
+  Subject: Your formula is on its way — Justin Keane Chinese Medicine
+
+  Hi [PATIENT_FIRST_NAME],
+
+  Great news — your herbal formula has been prepared and posted
+  from our Heathmont clinic.
+
+  YOUR FORMULA
+  ────────────
+  Formula:          [FORMULA_NAME]
+  Prescribed by:    Dr Justin Keane
+  Consultation:     [CONSULTATION_DATE]
+  Valid for:        [VALIDITY_PERIOD]
+  Dosage:           [DOSAGE_INSTRUCTIONS]
+
+  TRACKING
+  ────────
+  Australia Post tracking number: [TRACKING_NUMBER]
+  Track your parcel: [TRACKING_URL]
+
+  HOW TO PREPARE YOUR FORMULA
+  ───────────────────────────
+  1. Add [DOSAGE_INSTRUCTIONS] of the granules to a mug.
+  2. Pour freshly boiled water over the granules and stir
+     until fully dissolved.
+  3. Drink while warm, ideally 30 minutes before meals.
+  4. Store remaining granules in a cool, dry place with
+     the lid tightly closed.
+
+  IMPORTANT: If you experience any unexpected reactions,
+  stop taking the formula and contact us immediately on
+  (03) 9729 9333.
+
+  WHAT TO EXPECT
+  ──────────────
+  Most patients notice changes within 2-4 weeks for acute
+  presentations, or 6-8 weeks for longer-standing patterns.
+  Take your formula consistently at the same time each day.
+
+  FOLLOW-UP
+  ─────────
+  Dr Keane recommends a follow-up consultation around
+  [FOLLOW_UP_DATE]. Book through the platform at:
+  https://justinkeanechinesemedicine.com
+
+  Questions? Reply to this email or call (03) 9729 9333.
+
+  Warm regards,
+  Dr Justin Keane
+  Justin Keane Chinese Medicine
+  (03) 9729 9333
+  info@heathmontchinesemedicine.com.au
+  2/103 Canterbury Road, Heathmont VIC 3135
+  AHPRA: CMR0001739870
+
+  ═══════════════════════════════════════════════════════
+-->
+
+</body>
+</html>

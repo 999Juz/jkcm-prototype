@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Justin Keane Chinese Medicine</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!--
+  PrivacyPolicy.html
+  Justin Keane Chinese Medicine — Women's Health Platform
+
+  This Privacy Policy is specific to the Justin Keane Chinese Medicine
+  Women's Health Platform and covers:
+    - Collection of sensitive health information
+    - Tongue photograph storage and use
+    - Cliniko patient record creation
+    - Stripe payment processing
+    - AWS S3 file storage
+    - Australian Privacy Act 1988 compliance
+    - Health Records Act 2001 (Vic) compliance
+
+  INTEGRATION NOTES — for Peter Nguyen Brown:
+  ─────────────────────────────────────────────
+  1. This page should be accessible at /privacy
+  2. A checkbox linking to this page must appear before
+     the questionnaire begins — patient must tick it
+     before proceeding. Store consent with timestamp
+     in the patient record and in Cliniko notes.
+  3. The consent record should include:
+       - Patient email
+       - Timestamp (ISO 8601)
+       - Privacy Policy version number (see VERSION below)
+       - IP address
+  4. When the Privacy Policy is updated, increment the
+     VERSION number. Existing patients should be prompted
+     to re-accept on their next login.
+  5. The "Contact Us" email links should be updated if
+     a dedicated privacy email address is created.
+  6. Last Updated date should be updated automatically
+     from a CMS or manually on each revision.
+
+  VERSION: 1.0
+  LAST UPDATED: April 2026
+  ─────────────────────────────────────────────
+-->
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream:      #FAF5ED;
+  --cream-dark: #F2E9D8;
+  --terra:      #C1673A;
+  --terra-dark: #A3522B;
+  --brown:      #3D2B1F;
+  --brown-mid:  #7A5C45;
+  --brown-lt:   #A07850;
+  --muted:      #8B6E54;
+  --border:     rgba(161,120,80,0.2);
+  --green:      #4A7C59;
+  --serif:      'Cormorant Garamond', serif;
+  --sans:       'DM Sans', sans-serif;
+}
+
+html, body {
+  font-family: var(--sans);
+  background: #E8E0D4;
+  color: var(--brown);
+  font-size: 16px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+/* ── PHONE FRAME ── */
+.app-shell {
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px;
+  min-height: 100vh;
+}
+
+.phone {
+  width: 390px;
+  background: var(--cream);
+  border-radius: 40px;
+  overflow: hidden;
+  box-shadow: 0 40px 80px rgba(61,43,31,0.2);
+  border: 1px solid rgba(161,120,80,0.15);
+}
+
+.notch {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cream);
+}
+
+.notch-bar {
+  width: 110px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+}
+
+/* ── NAVIGATION ── */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(250,245,237,0.96);
+  backdrop-filter: blur(8px);
+  border-bottom: 0.5px solid var(--border);
+  padding: 13px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand-name { font-family: var(--serif); font-size: 17px; font-weight: 500; color: var(--brown); line-height: 1.2; }
+.brand-sub  { font-size: 10px; font-weight: 300; color: var(--brown-lt); letter-spacing: 0.06em; text-transform: uppercase; }
+
+.back-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--terra);
+  cursor: pointer;
+  font-family: var(--sans);
+  padding: 0;
+}
+
+/* ── HERO ── */
+.policy-hero {
+  background: var(--cream-dark);
+  padding: 32px 24px 28px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.policy-tag {
+  display: inline-block;
+  background: rgba(193,103,58,0.1);
+  color: var(--terra);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 5px 13px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+}
+
+.policy-hero h1 {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--brown);
+  margin-bottom: 10px;
+}
+
+.policy-meta {
+  font-size: 12px;
+  color: var(--brown-lt);
+  font-weight: 300;
+}
+
+/* ── CONTENTS ── */
+.contents {
+  padding: 24px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.contents-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brown-lt);
+  margin-bottom: 14px;
+}
+
+.contents-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.contents-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 0.5px solid var(--border);
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  text-align: left;
+  width: 100%;
+  font-size: 13px;
+  color: var(--brown);
+  cursor: pointer;
+  font-family: var(--sans);
+}
+
+.contents-item:last-child { border-bottom: none; }
+.contents-arrow { color: var(--terra); font-size: 13px; flex-shrink: 0; }
+
+/* ── POLICY SECTIONS ── */
+.policy-section {
+  padding: 32px 24px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.sec-num {
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--terra);
+  margin-bottom: 5px;
+}
+
+.sec-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--brown);
+  line-height: 1.25;
+  margin-bottom: 16px;
+}
+
+.body-text {
+  font-size: 14px;
+  color: var(--brown-mid);
+  font-weight: 300;
+  line-height: 1.85;
+  margin-bottom: 14px;
+}
+
+.body-text:last-child { margin-bottom: 0; }
+
+.body-text strong {
+  font-weight: 500;
+  color: var(--brown);
+}
+
+/* ── INFO CARDS ── */
+.info-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 16px 0;
+}
+
+.info-card-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--brown);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--terra);
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.info-body {
+  font-size: 13px;
+  color: var(--brown-mid);
+  font-weight: 300;
+  line-height: 1.7;
+  padding-left: 14px;
+}
+
+/* ── DATA TABLE ── */
+.data-table {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 16px 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.data-table th {
+  background: var(--cream-dark);
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--brown-lt);
+  text-align: left;
+  border-bottom: 0.5px solid var(--border);
+  letter-spacing: 0.04em;
+}
+
+.data-table td {
+  padding: 11px 14px;
+  font-size: 12px;
+  color: var(--brown-mid);
+  font-weight: 300;
+  border-bottom: 0.5px solid var(--border);
+  vertical-align: top;
+  line-height: 1.6;
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+
+/* ── HIGHLIGHT BOX ── */
+.highlight-box {
+  background: var(--cream-dark);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 16px 0;
+}
+
+.highlight-box p {
+  font-size: 13px;
+  color: var(--brown-mid);
+  font-weight: 300;
+  line-height: 1.8;
+}
+
+.highlight-box strong {
+  font-weight: 500;
+  color: var(--brown);
+}
+
+/* ── GREEN NOTE ── */
+.green-note {
+  background: #F0F7F2;
+  border: 1px solid rgba(74,124,89,0.2);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 16px 0;
+  font-size: 13px;
+  color: var(--green);
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* ── CONTACT SECTION ── */
+.contact-section {
+  padding: 32px 24px;
+  background: var(--cream-dark);
+  border-top: 0.5px solid var(--border);
+}
+
+.contact-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.contact-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 0.5px solid var(--border);
+  font-size: 13px;
+}
+
+.contact-row:last-child { border-bottom: none; }
+.contact-label { color: var(--brown-lt); font-weight: 300; flex-shrink: 0; margin-right: 12px; }
+.contact-value { color: var(--brown); font-weight: 400; text-align: right; }
+.contact-value a { color: var(--terra); text-decoration: none; }
+
+/* ── VERSION FOOTER ── */
+.version-footer {
+  padding: 18px 24px;
+  text-align: center;
+  border-top: 0.5px solid var(--border);
+}
+
+.version-footer p {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 300;
+  line-height: 1.7;
+}
+
+@media (max-width: 480px) {
+  body { background: var(--cream); }
+  .app-shell { padding: 0; }
+  .phone { width: 100%; border-radius: 0; box-shadow: none; }
+  .notch { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+<div class="phone">
+  <div class="notch"><div class="notch-bar"></div></div>
+
+  <!-- NAV -->
+  <nav>
+    <div>
+      <div class="brand-name">Justin Keane</div>
+      <div class="brand-sub">Chinese Medicine</div>
+    </div>
+    <button class="back-btn" onclick="history.back()">← Back</button>
+  </nav>
+
+  <!-- HERO -->
+  <div class="policy-hero">
+    <span class="policy-tag">Legal</span>
+    <h1>Privacy Policy</h1>
+    <p class="policy-meta">Version 1.0 &nbsp;·&nbsp; Last updated April 2026 &nbsp;·&nbsp; ABN 99 568 668 670</p>
+  </div>
+
+  <!-- CONTENTS -->
+  <div class="contents">
+    <p class="contents-label">Contents</p>
+    <div class="contents-list">
+      <button class="contents-item" onclick="scrollTo('s1')"><span class="contents-arrow">→</span> Who we are</button>
+      <button class="contents-item" onclick="scrollTo('s2')"><span class="contents-arrow">→</span> What information we collect</button>
+      <button class="contents-item" onclick="scrollTo('s3')"><span class="contents-arrow">→</span> How we collect your information</button>
+      <button class="contents-item" onclick="scrollTo('s4')"><span class="contents-arrow">→</span> How we use your information</button>
+      <button class="contents-item" onclick="scrollTo('s5')"><span class="contents-arrow">→</span> Who we share your information with</button>
+      <button class="contents-item" onclick="scrollTo('s6')"><span class="contents-arrow">→</span> Your tongue photograph</button>
+      <button class="contents-item" onclick="scrollTo('s7')"><span class="contents-arrow">→</span> How we store and protect your information</button>
+      <button class="contents-item" onclick="scrollTo('s8')"><span class="contents-arrow">→</span> How long we keep your information</button>
+      <button class="contents-item" onclick="scrollTo('s9')"><span class="contents-arrow">→</span> Your rights</button>
+      <button class="contents-item" onclick="scrollTo('s10')"><span class="contents-arrow">→</span> Complaints</button>
+      <button class="contents-item" onclick="scrollTo('s11')"><span class="contents-arrow">→</span> Changes to this policy</button>
+      <button class="contents-item" onclick="scrollTo('s12')"><span class="contents-arrow">→</span> Contact us</button>
+    </div>
+  </div>
+
+  <!-- INTRO -->
+  <div class="policy-section">
+    <p class="body-text">This Privacy Policy explains how Justin Keane Chinese Medicine (<strong>"we"</strong>, <strong>"us"</strong>, <strong>"our"</strong>) collects, uses, stores and protects your personal information when you use the Justin Keane Chinese Medicine Women's Health Platform (<strong>"the Platform"</strong>).</p>
+    <p class="body-text">We are committed to protecting your privacy and handling your personal information — particularly your sensitive health information — with care, transparency and in accordance with the <strong>Australian Privacy Act 1988 (Cth)</strong>, the <strong>Australian Privacy Principles (APPs)</strong>, and the <strong>Health Records Act 2001 (Vic)</strong>.</p>
+    <p class="body-text">By using the Platform and ticking the consent checkbox before beginning the questionnaire, you agree to the collection and use of your information as described in this policy.</p>
+  </div>
+
+  <!-- S1: WHO WE ARE -->
+  <div class="policy-section" id="s1">
+    <p class="sec-num">01</p>
+    <h2 class="sec-title">Who we are</h2>
+    <p class="body-text">The Platform is operated by Dr Justin Keane, trading as <strong>Heathmont Chinese Medicine</strong> (ABN 99 568 668 670), a registered Chinese Medicine practitioner (AHPRA Registration: CMR0001739870).</p>
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Practice details</div>
+      <div class="info-body">
+        Heathmont Chinese Medicine<br>
+        2/103 Canterbury Road, Heathmont VIC 3135<br>
+        (03) 9729 9333<br>
+        info@heathmontchinesemedicine.com.au
+      </div>
+    </div>
+    <p class="body-text">The Platform is designed to provide women's hormonal health consultations and personalised herbal formula prescriptions. All clinical decisions are made by Dr Justin Keane personally, following a real-time phone consultation with each patient.</p>
+  </div>
+
+  <!-- S2: WHAT WE COLLECT -->
+  <div class="policy-section" id="s2">
+    <p class="sec-num">02</p>
+    <h2 class="sec-title">What information we collect</h2>
+    <p class="body-text">We collect two categories of information:</p>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Personal information</div>
+      <div class="info-body">
+        Your name, email address, mobile number and state of residence — collected when you create an account and complete your booking details.
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Sensitive health information</div>
+      <div class="info-body">
+        Your age, menstrual cycle status, health concerns, energy patterns, temperature tendencies and any additional health notes you provide — collected through the intake questionnaire.<br><br>
+        A photograph of the surface of your tongue — collected as a clinical diagnostic tool prior to your consultation.<br><br>
+        Your consultation history and any herbal formulas prescribed to you.
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Payment information</div>
+      <div class="info-body">
+        Your payment is processed by Stripe. We do not collect or store your credit card details. Stripe handles all card data in accordance with PCI DSS standards.
+      </div>
+    </div>
+
+    <div class="green-note">
+      Your sensitive health information is classified as sensitive information under the Privacy Act. We collect it only with your explicit consent and only for the purpose of providing you with clinical care.
+    </div>
+  </div>
+
+  <!-- S3: HOW WE COLLECT -->
+  <div class="policy-section" id="s3">
+    <p class="sec-num">03</p>
+    <h2 class="sec-title">How we collect your information</h2>
+    <p class="body-text">We collect your information directly from you through the following steps on the Platform:</p>
+
+    <table class="data-table">
+      <tr><th>Step</th><th>Information collected</th></tr>
+      <tr><td>Intake questionnaire</td><td>Age, cycle status, health concerns, energy pattern, temperature tendency</td></tr>
+      <tr><td>Tongue photo upload</td><td>Photograph of the surface of your tongue</td></tr>
+      <tr><td>Account creation</td><td>Email address and password</td></tr>
+      <tr><td>Booking details</td><td>First name, last name, mobile number, state, optional health notes</td></tr>
+      <tr><td>Payment</td><td>Processed by Stripe — we receive confirmation only, not card details</td></tr>
+      <tr><td>Phone consultation</td><td>Clinical notes recorded by Dr Keane following your call</td></tr>
+    </table>
+
+    <p class="body-text">We will never collect more information than is necessary for your clinical care.</p>
+  </div>
+
+  <!-- S4: HOW WE USE -->
+  <div class="policy-section" id="s4">
+    <p class="sec-num">04</p>
+    <h2 class="sec-title">How we use your information</h2>
+    <p class="body-text">We use your information only for the following purposes:</p>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>To provide clinical care</div>
+      <div class="info-body">Your questionnaire responses and tongue photograph are reviewed by Dr Keane before your phone consultation to inform his clinical assessment and formula recommendation.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>To manage your booking</div>
+      <div class="info-body">Your name, email and mobile number are used to confirm your appointment, send a confirmation email and send SMS reminders 24 hours and 1 hour before your consultation.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>To maintain clinical records</div>
+      <div class="info-body">Your consultation history and prescribed formulas are stored in your patient record in Cliniko, our clinical management system, in accordance with health record-keeping requirements.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>To process payment</div>
+      <div class="info-body">Your booking details are used to process your consultation fee of $65.00 (inc. GST) through Stripe.</div>
+    </div>
+
+    <p class="body-text">We will never use your information for marketing purposes without your separate, explicit consent. We will never sell your information to any third party.</p>
+  </div>
+
+  <!-- S5: WHO WE SHARE WITH -->
+  <div class="policy-section" id="s5">
+    <p class="sec-num">05</p>
+    <h2 class="sec-title">Who we share your information with</h2>
+    <p class="body-text">We share your information only with the following trusted service providers, and only to the extent necessary to deliver your care:</p>
+
+    <table class="data-table">
+      <tr><th>Service provider</th><th>Purpose</th><th>Data shared</th></tr>
+      <tr><td><strong>Cliniko</strong></td><td>Clinical management system — stores your patient record, consultation notes, questionnaire summary and tongue photograph</td><td>Name, contact details, health information, tongue photo</td></tr>
+      <tr><td><strong>Stripe</strong></td><td>Payment processing</td><td>Name, email. Card details handled by Stripe directly — never seen by us</td></tr>
+      <tr><td><strong>AWS (Amazon Web Services)</strong></td><td>Secure cloud storage for tongue photographs — Sydney region</td><td>Tongue photograph only</td></tr>
+      <tr><td><strong>SendGrid or Postmark</strong></td><td>Transactional email — booking confirmation and reminders</td><td>Name, email, booking details</td></tr>
+      <tr><td><strong>Twilio</strong></td><td>SMS reminders</td><td>Mobile number, appointment time</td></tr>
+    </table>
+
+    <p class="body-text">All service providers are contractually required to handle your information in accordance with Australian privacy law. We do not share your information with any other third parties without your explicit consent, except where required by law.</p>
+  </div>
+
+  <!-- S6: TONGUE PHOTO -->
+  <div class="policy-section" id="s6">
+    <p class="sec-num">06</p>
+    <h2 class="sec-title">Your tongue photograph</h2>
+    <p class="body-text">Your tongue photograph is a clinical diagnostic tool used in Chinese Medicine to assess your internal health state. We treat it with the same care as any other sensitive health information.</p>
+
+    <div class="highlight-box">
+      <p><strong>How your tongue photograph is handled:</strong><br><br>
+      It is uploaded securely to a private, encrypted storage location in Australia (AWS S3, Sydney region). It is accessible only to Dr Justin Keane for the purpose of your clinical consultation. It is attached to your patient record in Cliniko and labelled with your name and the date of your consultation. It is never shared with any third party other than Cliniko. It is never used for any purpose other than your clinical care. It is never made publicly accessible.</p>
+    </div>
+
+    <p class="body-text">Your tongue photograph will be retained for 7 years from the date of your consultation in accordance with health record-keeping requirements under the Health Records Act 2001 (Vic). You may request earlier deletion at any time by contacting us — see Section 9.</p>
+  </div>
+
+  <!-- S7: STORAGE AND PROTECTION -->
+  <div class="policy-section" id="s7">
+    <p class="sec-num">07</p>
+    <h2 class="sec-title">How we store and protect your information</h2>
+    <p class="body-text">We take the security of your personal and health information seriously. The following measures are in place:</p>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Encryption</div>
+      <div class="info-body">All data is transmitted over HTTPS (encrypted in transit). Tongue photographs are encrypted at rest using AES-256 encryption. Your account password is hashed and never stored in plain text.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Australian data storage</div>
+      <div class="info-body">All your personal and health information is stored in Australia. Tongue photographs are stored in AWS Sydney region (ap-southeast-2). Patient records are stored in Cliniko's Australian servers.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Access controls</div>
+      <div class="info-body">Access to your health information is restricted to Dr Justin Keane. Tongue photographs are accessible only via secure, time-limited links. No public access is permitted to any health data.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Payment security</div>
+      <div class="info-body">Card details are handled entirely by Stripe and never pass through our systems. We are out of scope for PCI DSS when Stripe Elements is used correctly.</div>
+    </div>
+
+    <p class="body-text">In the unlikely event of a data breach that is likely to result in serious harm, we will notify affected individuals and the Office of the Australian Information Commissioner (OAIC) as required under the Notifiable Data Breaches scheme.</p>
+  </div>
+
+  <!-- S8: RETENTION -->
+  <div class="policy-section" id="s8">
+    <p class="sec-num">08</p>
+    <h2 class="sec-title">How long we keep your information</h2>
+
+    <table class="data-table">
+      <tr><th>Type of information</th><th>Retention period</th></tr>
+      <tr><td>Clinical records (consultation notes, questionnaire, formulas)</td><td>7 years from date of last consultation, as required by the Health Records Act 2001 (Vic)</td></tr>
+      <tr><td>Tongue photographs</td><td>7 years from date of consultation, unless you request earlier deletion</td></tr>
+      <tr><td>Account information (name, email, password)</td><td>Duration of your account, plus 7 years after your last consultation</td></tr>
+      <tr><td>Payment records</td><td>7 years, as required by Australian tax law</td></tr>
+      <tr><td>SMS and email logs</td><td>12 months</td></tr>
+    </table>
+
+    <p class="body-text">After the applicable retention period, your information will be securely deleted or de-identified.</p>
+  </div>
+
+  <!-- S9: YOUR RIGHTS -->
+  <div class="policy-section" id="s9">
+    <p class="sec-num">09</p>
+    <h2 class="sec-title">Your rights</h2>
+    <p class="body-text">Under the Australian Privacy Act and the Health Records Act, you have the following rights:</p>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Access</div>
+      <div class="info-body">You have the right to request access to the personal and health information we hold about you. We will respond within 30 days.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Correction</div>
+      <div class="info-body">If you believe any information we hold about you is inaccurate, incomplete or out of date, you may request that we correct it.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Deletion</div>
+      <div class="info-body">You may request deletion of your tongue photographs at any time. Deletion of clinical records may be subject to our legal retention obligations under the Health Records Act 2001 (Vic).</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Withdrawal of consent</div>
+      <div class="info-body">You may withdraw your consent to the collection of your health information at any time by contacting us. Please note that withdrawal of consent may prevent us from providing ongoing clinical care.</div>
+    </div>
+
+    <p class="body-text">To exercise any of these rights, please contact us using the details in Section 12. We will acknowledge your request within 5 business days and respond in full within 30 days.</p>
+  </div>
+
+  <!-- S10: COMPLAINTS -->
+  <div class="policy-section" id="s10">
+    <p class="sec-num">10</p>
+    <h2 class="sec-title">Complaints</h2>
+    <p class="body-text">If you have a concern about how we have handled your personal or health information, we encourage you to contact us first so we can try to resolve the matter directly.</p>
+    <p class="body-text">If you are not satisfied with our response, you may lodge a complaint with the <strong>Office of the Australian Information Commissioner (OAIC)</strong>:</p>
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>OAIC contact details</div>
+      <div class="info-body">
+        Website: www.oaic.gov.au<br>
+        Phone: 1300 363 992<br>
+        GPO Box 5218, Sydney NSW 2001
+      </div>
+    </div>
+    <p class="body-text">For health-specific complaints in Victoria, you may also contact the <strong>Health Complaints Commissioner</strong>:</p>
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Health Complaints Commissioner</div>
+      <div class="info-body">
+        Website: www.hcc.vic.gov.au<br>
+        Phone: 1300 582 113
+      </div>
+    </div>
+  </div>
+
+  <!-- S11: CHANGES -->
+  <div class="policy-section" id="s11">
+    <p class="sec-num">11</p>
+    <h2 class="sec-title">Changes to this policy</h2>
+    <p class="body-text">We may update this Privacy Policy from time to time to reflect changes in our practices, the Platform, or applicable law. When we make material changes, we will notify you by email and prompt you to review and re-accept the updated policy on your next login.</p>
+    <p class="body-text">The version number and date at the top of this policy will always reflect the most current version. Previous versions are available on request.</p>
+  </div>
+
+  <!-- S12: CONTACT -->
+  <div class="contact-section" id="s12">
+    <p class="sec-num">12</p>
+    <h2 class="sec-title" style="margin-bottom:16px">Contact us</h2>
+    <p class="body-text" style="margin-bottom:16px">For any privacy-related questions, requests or complaints, please contact us using the details below. We will acknowledge your request within 5 business days.</p>
+    <div class="contact-card">
+      <div class="contact-row"><span class="contact-label">Practice</span><span class="contact-value">Heathmont Chinese Medicine</span></div>
+      <div class="contact-row"><span class="contact-label">Practitioner</span><span class="contact-value">Dr Justin Keane</span></div>
+      <div class="contact-row"><span class="contact-label">ABN</span><span class="contact-value">99 568 668 670</span></div>
+      <div class="contact-row"><span class="contact-label">AHPRA</span><span class="contact-value">CMR0001739870</span></div>
+      <div class="contact-row"><span class="contact-label">Email</span><span class="contact-value"><a href="mailto:info@heathmontchinesemedicine.com.au">info@heathmontchinesemedicine.com.au</a></span></div>
+      <div class="contact-row"><span class="contact-label">Phone</span><span class="contact-value">(03) 9729 9333</span></div>
+      <div class="contact-row"><span class="contact-label">Address</span><span class="contact-value">2/103 Canterbury Road,<br>Heathmont VIC 3135</span></div>
+    </div>
+  </div>
+
+  <!-- VERSION FOOTER -->
+  <div class="version-footer">
+    <p>Privacy Policy Version 1.0 &nbsp;·&nbsp; April 2026<br>Justin Keane Chinese Medicine &nbsp;·&nbsp; ABN 99 568 668 670</p>
+  </div>
+
+</div><!-- end phone -->
+</div><!-- end app-shell -->
+
+<script>
+  // Smooth scroll to section
+  function scrollTo(id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+</script>
+
+</body>
+</html>

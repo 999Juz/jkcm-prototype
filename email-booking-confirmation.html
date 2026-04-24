@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Booking Confirmed — Justin Keane Chinese Medicine</title>
+
+<!--
+  email-booking-confirmation.html
+  Justin Keane Chinese Medicine — Women's Health Platform
+
+  BOOKING CONFIRMATION EMAIL
+  Sent automatically after a consultation is booked and paid for.
+
+  INTEGRATION NOTES — for Peter Nguyen Brown:
+  ─────────────────────────────────────────────
+  OPTION A — USE CLINIKO'S BUILT-IN NOTIFICATIONS (recommended):
+    1. Log into Cliniko → Settings → Notifications
+    2. Enable "Appointment confirmation" emails
+    3. Copy the plain text content from the PLAIN TEXT VERSION
+       section at the bottom of this file into Cliniko's
+       email template editor
+    4. Use Cliniko's merge tags for dynamic fields:
+         {{patient_first_name}}
+         {{appointment_date}}
+         {{appointment_time}}
+         {{practitioner_name}}
+    5. Add your logo and brand colours in Cliniko's
+       email settings if available
+
+  OPTION B — USE SENDGRID OR POSTMARK (for full HTML control):
+    1. Create a new template in SendGrid/Postmark
+    2. Paste the HTML below as the template body
+    3. Replace placeholder text with your email provider's
+       merge tag syntax:
+         SendGrid:  {{patient_first_name}}
+         Postmark:  {{patient_first_name}}
+    4. Trigger this template from the backend after the
+       Cliniko appointment is successfully created
+       (Step 5 in the booking sequence in BookingScreen.jsx)
+
+  DYNAMIC FIELDS TO REPLACE WITH MERGE TAGS:
+    [PATIENT_FIRST_NAME]  — patient's first name
+    [APPOINTMENT_DATE]    — e.g. Friday, 17 April 2026
+    [APPOINTMENT_TIME]    — e.g. 7:00 pm
+    [BOOKING_REFERENCE]   — unique booking ID from your system
+
+  VERSION: 1.0
+  ─────────────────────────────────────────────
+-->
+
+<style>
+  /* Email-safe CSS — inline styles used throughout for
+     maximum compatibility across email clients.
+     Gmail, Outlook, Apple Mail all tested patterns used. */
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont,
+                 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: #E8E0D4;
+    color: #3D2B1F;
+    font-size: 16px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .email-wrapper {
+    max-width: 560px;
+    margin: 40px auto;
+    background: #FAF5ED;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(61,43,31,0.12);
+  }
+
+  /* Header */
+  .email-header {
+    background: #F2E9D8;
+    padding: 32px 40px 28px;
+    border-bottom: 1px solid rgba(161,120,80,0.2);
+    text-align: center;
+  }
+
+  .brand-name {
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: #3D2B1F;
+    margin-bottom: 2px;
+  }
+
+  .brand-sub {
+    font-size: 11px;
+    font-weight: 300;
+    color: #A07850;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Green confirmation banner */
+  .confirm-banner {
+    background: #F0F7F2;
+    border-bottom: 1px solid rgba(74,124,89,0.2);
+    padding: 24px 40px;
+    text-align: center;
+  }
+
+  .confirm-tick {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(74,124,89,0.15);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #4A7C59;
+    margin-bottom: 12px;
+  }
+
+  .confirm-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 26px;
+    font-weight: 400;
+    color: #3D2B1F;
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+
+  .confirm-title em {
+    font-style: italic;
+    color: #4A7C59;
+  }
+
+  .confirm-sub {
+    font-size: 14px;
+    color: #7A5C45;
+    font-weight: 300;
+    line-height: 1.6;
+  }
+
+  /* Body */
+  .email-body {
+    padding: 32px 40px;
+  }
+
+  .greeting {
+    font-size: 15px;
+    color: #3D2B1F;
+    margin-bottom: 14px;
+    font-weight: 400;
+  }
+
+  .body-text {
+    font-size: 14px;
+    color: #7A5C45;
+    font-weight: 300;
+    line-height: 1.8;
+    margin-bottom: 14px;
+  }
+
+  /* Booking details card */
+  .details-card {
+    background: #fff;
+    border: 1px solid rgba(161,120,80,0.2);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 24px 0;
+  }
+
+  .details-card-header {
+    background: #F2E9D8;
+    padding: 12px 18px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #A07850;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(161,120,80,0.2);
+  }
+
+  .details-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 11px 18px;
+    border-bottom: 1px solid rgba(161,120,80,0.15);
+    font-size: 13px;
+  }
+
+  .details-row:last-child { border-bottom: none; }
+  .details-label { color: #A07850; font-weight: 300; }
+  .details-value { color: #3D2B1F; font-weight: 500; text-align: right; }
+
+  /* What to expect section */
+  .expect-section {
+    margin: 24px 0;
+  }
+
+  .expect-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #A07850;
+    margin-bottom: 14px;
+  }
+
+  .expect-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+
+  .expect-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #F2E9D8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 14px;
+    color: #C1673A;
+    font-weight: 400;
+  }
+
+  .expect-text {
+    flex: 1;
+    font-size: 13px;
+    color: #7A5C45;
+    font-weight: 300;
+    line-height: 1.7;
+    padding-top: 4px;
+  }
+
+  .expect-text strong {
+    font-weight: 500;
+    color: #3D2B1F;
+  }
+
+  /* Amber note */
+  .amber-note {
+    background: #FDF5E6;
+    border: 1px solid rgba(160,112,32,0.2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 20px 0;
+    font-size: 13px;
+    color: #A07020;
+    font-weight: 400;
+    line-height: 1.6;
+  }
+
+  /* Divider */
+  .divider {
+    border: none;
+    border-top: 1px solid rgba(161,120,80,0.15);
+    margin: 24px 0;
+  }
+
+  /* Footer */
+  .email-footer {
+    background: #F2E9D8;
+    padding: 24px 40px;
+    border-top: 1px solid rgba(161,120,80,0.2);
+    text-align: center;
+  }
+
+  .footer-text {
+    font-size: 12px;
+    color: #A07850;
+    font-weight: 300;
+    line-height: 1.7;
+    margin-bottom: 6px;
+  }
+
+  .footer-link {
+    color: #C1673A;
+    text-decoration: none;
+  }
+
+  .footer-ahpra {
+    font-size: 11px;
+    color: #8B6E54;
+    font-weight: 300;
+    margin-top: 8px;
+  }
+
+  @media (max-width: 600px) {
+    .email-wrapper { margin: 0; border-radius: 0; }
+    .email-header, .email-body, .email-footer, .confirm-banner { padding: 24px 20px; }
+  }
+</style>
+
+<!-- Google Fonts — may not load in all email clients.
+     Fallback fonts specified in font-family stacks above. -->
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+</head>
+<body>
+
+<div class="email-wrapper">
+
+  <!-- HEADER -->
+  <div class="email-header">
+    <div class="brand-name">Justin Keane Chinese Medicine</div>
+    <div class="brand-sub">Women's Health Platform</div>
+  </div>
+
+  <!-- CONFIRMATION BANNER -->
+  <div class="confirm-banner">
+    <div class="confirm-tick">✓</div>
+    <h1 class="confirm-title">You're <em>booked in.</em></h1>
+    <p class="confirm-sub">
+      Your consultation is confirmed. Dr Keane will call you at your booked time.
+    </p>
+  </div>
+
+  <!-- BODY -->
+  <div class="email-body">
+
+    <p class="greeting">Hi [PATIENT_FIRST_NAME],</p>
+
+    <p class="body-text">
+      Thank you for booking your consultation with Dr Justin Keane. Everything is confirmed — here are your booking details.
+    </p>
+
+    <!-- BOOKING DETAILS CARD -->
+    <div class="details-card">
+      <div class="details-card-header">Your booking</div>
+      <div class="details-row">
+        <span class="details-label">Practitioner</span>
+        <span class="details-value">Dr Justin Keane</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">Date</span>
+        <span class="details-value">[APPOINTMENT_DATE]</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">Time</span>
+        <span class="details-value">[APPOINTMENT_TIME] AEST</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">Type</span>
+        <span class="details-value">Phone consultation — 10 min</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">Paid</span>
+        <span class="details-value">$65.00 inc. GST</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">Reference</span>
+        <span class="details-value">[BOOKING_REFERENCE]</span>
+      </div>
+    </div>
+
+    <!-- WHAT TO EXPECT -->
+    <div class="expect-section">
+      <p class="expect-label">What happens next</p>
+
+      <div class="expect-item">
+        <div class="expect-num">1</div>
+        <p class="expect-text">
+          <strong>Dr Keane will call you</strong> at [APPOINTMENT_TIME] on [APPOINTMENT_DATE] on the mobile number you provided. Please make sure you're available and in a quiet spot.
+        </p>
+      </div>
+
+      <div class="expect-item">
+        <div class="expect-num">2</div>
+        <p class="expect-text">
+          <strong>The call takes about 10 minutes.</strong> Dr Keane will have already reviewed your questionnaire responses and tongue photograph. He'll ask a few follow-up questions and confirm your formula.
+        </p>
+      </div>
+
+      <div class="expect-item">
+        <div class="expect-num">3</div>
+        <p class="expect-text">
+          <strong>Your formula will be prepared and posted</strong> to you within 1–3 business days of your consultation. You'll receive a separate email when it's on its way.
+        </p>
+      </div>
+    </div>
+
+    <!-- AMBER NOTE -->
+    <div class="amber-note">
+      <strong>Before your call:</strong> Please make sure you have disclosed all current medications and supplements in your intake notes. If you need to add anything, reply to this email before your appointment time.
+    </div>
+
+    <hr class="divider">
+
+    <!-- CANCELLATION NOTE -->
+    <p class="body-text">
+      Need to reschedule? Please contact us at least 24 hours before your appointment. Cancellations within 24 hours of the appointment time are non-refundable.
+    </p>
+
+    <p class="body-text">
+      You'll also receive an SMS reminder one hour before your appointment.
+    </p>
+
+    <p class="body-text">
+      If you have any questions before your call, please don't hesitate to get in touch.
+    </p>
+
+    <p style="font-size:14px; color:#3D2B1F; margin-top:20px; font-weight:400;">
+      Warm regards,<br>
+      <strong>Dr Justin Keane</strong><br>
+      <span style="font-size:13px; color:#A07850; font-weight:300;">
+        Justin Keane Chinese Medicine<br>
+        (03) 9729 9333 &nbsp;·&nbsp;
+        <a href="mailto:info@heathmontchinesemedicine.com.au" style="color:#C1673A; text-decoration:none;">
+          info@heathmontchinesemedicine.com.au
+        </a>
+      </span>
+    </p>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="email-footer">
+    <p class="footer-text">
+      Justin Keane Chinese Medicine &nbsp;·&nbsp; 2/103 Canterbury Road, Heathmont VIC 3135<br>
+      <a href="https://justinkeanechinesemedicine.com/TermsOfService.html" class="footer-link">Terms of Service</a>
+      &nbsp;·&nbsp;
+      <a href="https://justinkeanechinesemedicine.com/PrivacyPolicy.html" class="footer-link">Privacy Policy</a>
+    </p>
+    <p class="footer-ahpra">
+      Dr Justin Keane &nbsp;·&nbsp; Registered Chinese Medicine Practitioner &nbsp;·&nbsp; AHPRA: CMR0001739870
+    </p>
+  </div>
+
+</div>
+
+<!--
+  ═══════════════════════════════════════════════════════
+  PLAIN TEXT VERSION
+  Copy this into Cliniko's email template editor.
+  Replace merge tags with Cliniko's own tag format.
+  ═══════════════════════════════════════════════════════
+
+  Subject: Your consultation is confirmed — Justin Keane Chinese Medicine
+
+  Hi [PATIENT_FIRST_NAME],
+
+  Your consultation with Dr Justin Keane is confirmed.
+
+  YOUR BOOKING
+  ────────────
+  Practitioner: Dr Justin Keane
+  Date:         [APPOINTMENT_DATE]
+  Time:         [APPOINTMENT_TIME] AEST
+  Type:         Phone consultation — 10 minutes
+  Paid:         $65.00 inc. GST
+  Reference:    [BOOKING_REFERENCE]
+
+  WHAT HAPPENS NEXT
+  ─────────────────
+  1. Dr Keane will call you at [APPOINTMENT_TIME] on [APPOINTMENT_DATE]
+     on the mobile number you provided. Please make sure you're
+     available and in a quiet spot.
+
+  2. The call takes about 10 minutes. Dr Keane will have already
+     reviewed your questionnaire responses and tongue photograph.
+     He'll ask a few follow-up questions and confirm your formula.
+
+  3. Your formula will be prepared and posted to you within
+     1–3 business days of your consultation. You'll receive a
+     separate email when it's on its way.
+
+  BEFORE YOUR CALL
+  ────────────────
+  Please make sure you have disclosed all current medications and
+  supplements in your intake notes. If you need to add anything,
+  reply to this email before your appointment time.
+
+  You'll also receive an SMS reminder one hour before your appointment.
+
+  Need to reschedule? Please contact us at least 24 hours before your
+  appointment. Cancellations within 24 hours are non-refundable.
+
+  Warm regards,
+  Dr Justin Keane
+  Justin Keane Chinese Medicine
+  (03) 9729 9333
+  info@heathmontchinesemedicine.com.au
+  2/103 Canterbury Road, Heathmont VIC 3135
+  AHPRA: CMR0001739870
+
+  Terms of Service: https://justinkeanechinesemedicine.com/TermsOfService.html
+  Privacy Policy: https://justinkeanechinesemedicine.com/PrivacyPolicy.html
+
+  ═══════════════════════════════════════════════════════
+-->
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+# robots.txt
+# Justin Keane Chinese Medicine — Women's Health Platform
+#
+# This file instructs search engine crawlers not to index
+# this site during development and pre-launch.
+#
+# IMPORTANT — for Peter Nguyen Brown:
+# Remove or replace this file at launch with the following
+# to allow full indexing:
+#
+#   User-agent: *
+#   Allow: /
+#   Sitemap: https://justinkeanechinesemedicine.com/sitemap.xml
+#
+# Until then, this file prevents the prototype from appearing
+# in Google and other search engine results.
+
+User-agent: *
+Disallow: /

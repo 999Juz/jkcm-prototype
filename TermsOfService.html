@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Service — Justin Keane Chinese Medicine</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!--
+  TermsOfService.html
+  Justin Keane Chinese Medicine — Women's Health Platform
+
+  These Terms of Service govern the use of the JKCM Women's Health
+  Platform. They cover:
+    - Nature of the service (triage tool, not a substitute for care)
+    - AHPRA compliance (phone consult is the legal consultation)
+    - Patient eligibility (18+, Australian residents)
+    - Booking, payment and cancellation terms
+    - Formula fulfilment and postage
+    - Limitation of liability
+    - Intellectual property (proprietary formulas)
+    - Governing law (Victoria, Australia)
+
+  INTEGRATION NOTES — for Peter Nguyen Brown:
+  ─────────────────────────────────────────────
+  1. This page should be accessible at /terms
+  2. A checkbox linking to this page must appear alongside
+     the Privacy Policy checkbox before the questionnaire
+     begins. Both must be ticked before proceeding.
+  3. Store acceptance with timestamp, version number and
+     IP address in the patient record — same as Privacy Policy.
+  4. VERSION and LAST UPDATED should be updated on each revision.
+  5. The cancellation policy (24 hours notice) should be
+     enforced in the booking system — flag late cancellations
+     for manual review rather than automatic charge.
+
+  VERSION: 1.0
+  LAST UPDATED: April 2026
+  ─────────────────────────────────────────────
+-->
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream:      #FAF5ED;
+  --cream-dark: #F2E9D8;
+  --terra:      #C1673A;
+  --terra-dark: #A3522B;
+  --brown:      #3D2B1F;
+  --brown-mid:  #7A5C45;
+  --brown-lt:   #A07850;
+  --muted:      #8B6E54;
+  --border:     rgba(161,120,80,0.2);
+  --green:      #4A7C59;
+  --green-bg:   #F0F7F2;
+  --amber:      #A07020;
+  --amber-bg:   #FDF5E6;
+  --serif:      'Cormorant Garamond', serif;
+  --sans:       'DM Sans', sans-serif;
+}
+
+html, body {
+  font-family: var(--sans);
+  background: #E8E0D4;
+  color: var(--brown);
+  font-size: 16px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+.app-shell {
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px;
+  min-height: 100vh;
+}
+
+.phone {
+  width: 390px;
+  background: var(--cream);
+  border-radius: 40px;
+  overflow: hidden;
+  box-shadow: 0 40px 80px rgba(61,43,31,0.2);
+  border: 1px solid rgba(161,120,80,0.15);
+}
+
+.notch {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cream);
+}
+
+.notch-bar {
+  width: 110px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+}
+
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(250,245,237,0.96);
+  backdrop-filter: blur(8px);
+  border-bottom: 0.5px solid var(--border);
+  padding: 13px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand-name { font-family: var(--serif); font-size: 17px; font-weight: 500; color: var(--brown); line-height: 1.2; }
+.brand-sub  { font-size: 10px; font-weight: 300; color: var(--brown-lt); letter-spacing: 0.06em; text-transform: uppercase; }
+.back-btn   { background: none; border: none; font-size: 13px; color: var(--terra); cursor: pointer; font-family: var(--sans); padding: 0; }
+
+.policy-hero {
+  background: var(--cream-dark);
+  padding: 32px 24px 28px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.policy-tag {
+  display: inline-block;
+  background: rgba(193,103,58,0.1);
+  color: var(--terra);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 5px 13px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+}
+
+.policy-hero h1 { font-family: var(--serif); font-size: 28px; font-weight: 400; line-height: 1.2; color: var(--brown); margin-bottom: 10px; }
+.policy-meta    { font-size: 12px; color: var(--brown-lt); font-weight: 300; }
+
+.contents { padding: 24px; border-bottom: 0.5px solid var(--border); }
+.contents-label { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--brown-lt); margin-bottom: 14px; }
+.contents-list  { display: flex; flex-direction: column; }
+.contents-item  { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid var(--border); background: none; border-top: none; border-left: none; border-right: none; text-align: left; width: 100%; font-size: 13px; color: var(--brown); cursor: pointer; font-family: var(--sans); }
+.contents-item:last-child { border-bottom: none; }
+.contents-arrow { color: var(--terra); font-size: 13px; flex-shrink: 0; }
+
+.policy-section { padding: 32px 24px; border-bottom: 0.5px solid var(--border); }
+.sec-num   { font-family: var(--serif); font-size: 13px; color: var(--terra); margin-bottom: 5px; }
+.sec-title { font-family: var(--serif); font-size: 22px; font-weight: 400; color: var(--brown); line-height: 1.25; margin-bottom: 16px; }
+.body-text { font-size: 14px; color: var(--brown-mid); font-weight: 300; line-height: 1.85; margin-bottom: 14px; }
+.body-text:last-child { margin-bottom: 0; }
+.body-text strong { font-weight: 500; color: var(--brown); }
+
+.info-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin: 14px 0; }
+.info-card-title { font-size: 13px; font-weight: 500; color: var(--brown); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.info-dot  { width: 6px; height: 6px; border-radius: 50%; background: var(--terra); flex-shrink: 0; display: inline-block; }
+.info-body { font-size: 13px; color: var(--brown-mid); font-weight: 300; line-height: 1.7; padding-left: 14px; }
+
+.amber-box { background: var(--amber-bg); border: 1px solid rgba(160,112,32,0.2); border-radius: 12px; padding: 15px 17px; margin: 14px 0; font-size: 13px; color: var(--amber); font-weight: 400; line-height: 1.7; }
+.amber-box strong { font-weight: 500; }
+
+.green-note { background: var(--green-bg); border: 1px solid rgba(74,124,89,0.2); border-radius: 12px; padding: 14px 16px; margin: 14px 0; font-size: 13px; color: var(--green); font-weight: 400; line-height: 1.6; }
+
+.data-table { width: 100%; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin: 14px 0; border-collapse: separate; border-spacing: 0; }
+.data-table th { background: var(--cream-dark); padding: 10px 14px; font-size: 11px; font-weight: 500; color: var(--brown-lt); text-align: left; border-bottom: 0.5px solid var(--border); letter-spacing: 0.04em; }
+.data-table td { padding: 11px 14px; font-size: 12px; color: var(--brown-mid); font-weight: 300; border-bottom: 0.5px solid var(--border); vertical-align: top; line-height: 1.6; }
+.data-table tr:last-child td { border-bottom: none; }
+
+.contact-section { padding: 32px 24px; background: var(--cream-dark); border-top: 0.5px solid var(--border); }
+.contact-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.contact-row  { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+.contact-row:last-child { border-bottom: none; }
+.contact-label { color: var(--brown-lt); font-weight: 300; flex-shrink: 0; margin-right: 12px; }
+.contact-value { color: var(--brown); font-weight: 400; text-align: right; }
+.contact-value a { color: var(--terra); text-decoration: none; }
+
+.version-footer { padding: 18px 24px; text-align: center; border-top: 0.5px solid var(--border); }
+.version-footer p { font-size: 11px; color: var(--muted); font-weight: 300; line-height: 1.7; }
+
+@media (max-width: 480px) {
+  body { background: var(--cream); }
+  .app-shell { padding: 0; }
+  .phone { width: 100%; border-radius: 0; box-shadow: none; }
+  .notch { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+<div class="phone">
+  <div class="notch"><div class="notch-bar"></div></div>
+
+  <nav>
+    <div>
+      <div class="brand-name">Justin Keane</div>
+      <div class="brand-sub">Chinese Medicine</div>
+    </div>
+    <button class="back-btn" onclick="history.back()">← Back</button>
+  </nav>
+
+  <div class="policy-hero">
+    <span class="policy-tag">Legal</span>
+    <h1>Terms of Service</h1>
+    <p class="policy-meta">Version 1.0 &nbsp;·&nbsp; Last updated April 2026 &nbsp;·&nbsp; ABN 99 568 668 670</p>
+  </div>
+
+  <div class="contents">
+    <p class="contents-label">Contents</p>
+    <div class="contents-list">
+      <button class="contents-item" onclick="scrollTo('s1')"><span class="contents-arrow">→</span> About the platform</button>
+      <button class="contents-item" onclick="scrollTo('s2')"><span class="contents-arrow">→</span> Who can use the platform</button>
+      <button class="contents-item" onclick="scrollTo('s3')"><span class="contents-arrow">→</span> The nature of this service</button>
+      <button class="contents-item" onclick="scrollTo('s4')"><span class="contents-arrow">→</span> Your consultation</button>
+      <button class="contents-item" onclick="scrollTo('s5')"><span class="contents-arrow">→</span> Booking and payment</button>
+      <button class="contents-item" onclick="scrollTo('s6')"><span class="contents-arrow">→</span> Cancellation and rescheduling</button>
+      <button class="contents-item" onclick="scrollTo('s7')"><span class="contents-arrow">→</span> Formula fulfilment and postage</button>
+      <button class="contents-item" onclick="scrollTo('s8')"><span class="contents-arrow">→</span> Your responsibilities</button>
+      <button class="contents-item" onclick="scrollTo('s9')"><span class="contents-arrow">→</span> Intellectual property</button>
+      <button class="contents-item" onclick="scrollTo('s10')"><span class="contents-arrow">→</span> Limitation of liability</button>
+      <button class="contents-item" onclick="scrollTo('s11')"><span class="contents-arrow">→</span> Governing law</button>
+      <button class="contents-item" onclick="scrollTo('s12')"><span class="contents-arrow">→</span> Contact us</button>
+    </div>
+  </div>
+
+  <!-- INTRO -->
+  <div class="policy-section">
+    <p class="body-text">These Terms of Service (<strong>"Terms"</strong>) govern your use of the Justin Keane Chinese Medicine Women's Health Platform (<strong>"the Platform"</strong>), operated by Dr Justin Keane trading as Heathmont Chinese Medicine (ABN 99 568 668 670).</p>
+    <p class="body-text">By creating an account, completing the intake questionnaire or booking a consultation, you agree to these Terms. Please read them carefully before proceeding.</p>
+    <p class="body-text">If you do not agree to these Terms, please do not use the Platform.</p>
+  </div>
+
+  <!-- S1: ABOUT -->
+  <div class="policy-section" id="s1">
+    <p class="sec-num">01</p>
+    <h2 class="sec-title">About the platform</h2>
+    <p class="body-text">The Platform provides women's hormonal health consultations and personalised Chinese herbal medicine prescriptions via a structured intake questionnaire, tongue photograph and short phone consultation with Dr Justin Keane.</p>
+    <p class="body-text">The Platform is operated from Victoria, Australia and serves Australian residents only. All clinical services are provided by Dr Justin Keane, a registered Chinese Medicine practitioner (AHPRA: CMR0001739870).</p>
+  </div>
+
+  <!-- S2: ELIGIBILITY -->
+  <div class="policy-section" id="s2">
+    <p class="sec-num">02</p>
+    <h2 class="sec-title">Who can use the platform</h2>
+    <p class="body-text">To use the Platform you must:</p>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Be aged 18 or over</div>
+      <div class="info-body">The Platform is not available to patients under 18. If you are under 18 you will be directed to book an in-person consultation at the Heathmont clinic.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Be an Australian resident</div>
+      <div class="info-body">The Platform is currently available to Australian residents only. Formula fulfilment is via Australia Post within Australia.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Not be pregnant or recently postpartum</div>
+      <div class="info-body">Pregnancy and postpartum care requires a full in-person clinical assessment and cannot be served through the Platform. You will be directed to book at the Heathmont clinic.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Present with a condition within the platform's scope</div>
+      <div class="info-body">The Platform is designed to serve clear presentations within a defined clinical framework. If your presentation falls outside this scope, you will be warmly directed to an in-person consultation. This is a clinical decision, not a rejection.</div>
+    </div>
+  </div>
+
+  <!-- S3: NATURE OF SERVICE -->
+  <div class="policy-section" id="s3">
+    <p class="sec-num">03</p>
+    <h2 class="sec-title">The nature of this service</h2>
+
+    <div class="amber-box">
+      <strong>Important — please read carefully.</strong><br><br>
+      The intake questionnaire and tongue photograph are triage and intake tools only. They are not a clinical consultation and do not constitute medical advice. No diagnosis is made and no formula is issued on the basis of the questionnaire or photograph alone.
+    </div>
+
+    <p class="body-text">The legal and clinical consultation is the real-time phone call with Dr Justin Keane. Your herbal formula is issued by Dr Keane personally, following that call, based on his clinical judgement.</p>
+    <p class="body-text">This service is a complementary health service. It is not a substitute for medical advice, diagnosis or treatment by a medical doctor. If you are experiencing a medical emergency, call 000 immediately.</p>
+    <p class="body-text">If Dr Keane determines on the phone call that your presentation is more complex than the Platform is designed to serve, he may redirect you to an in-person consultation. In this circumstance your consultation fee will be refunded in full.</p>
+
+    <div class="green-note">
+      Chinese herbal medicine is a regulated health profession in Australia. Dr Justin Keane is registered with AHPRA and practises in accordance with the Chinese Medicine Board of Australia's standards for telehealth and virtual care.
+    </div>
+  </div>
+
+  <!-- S4: YOUR CONSULTATION -->
+  <div class="policy-section" id="s4">
+    <p class="sec-num">04</p>
+    <h2 class="sec-title">Your consultation</h2>
+    <p class="body-text">Your phone consultation with Dr Keane will take approximately 10 minutes. To make the most of your consultation:</p>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Be available at your booked time</div>
+      <div class="info-body">Dr Keane will call the mobile number you provided at your booked time. Please ensure you are in a quiet location and able to speak freely about your health.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Disclose all relevant health information</div>
+      <div class="info-body">Please disclose all current medications, supplements, diagnosed conditions and relevant health history to Dr Keane on the call. Withholding relevant information may affect the safety and appropriateness of your formula.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Tongue photo accuracy</div>
+      <div class="info-body">Please follow the tongue photo instructions carefully. Your photo must be taken before tongue scraping, at least 30 minutes after eating or drinking, in natural light, showing the full surface of your tongue from root to tip. Inaccurate photos may affect the clinical assessment.</div>
+    </div>
+
+    <p class="body-text">Dr Keane will record brief consultation notes following your call. These notes, along with your questionnaire responses and tongue photograph, form part of your clinical record and are stored in accordance with our Privacy Policy.</p>
+  </div>
+
+  <!-- S5: BOOKING AND PAYMENT -->
+  <div class="policy-section" id="s5">
+    <p class="sec-num">05</p>
+    <h2 class="sec-title">Booking and payment</h2>
+
+    <table class="data-table">
+      <tr><th>Item</th><th>Detail</th></tr>
+      <tr><td>Consultation fee</td><td>$65.00 including GST ($59.09 + $5.91 GST)</td></tr>
+      <tr><td>Payment timing</td><td>Payment is taken at the time of booking to secure your appointment</td></tr>
+      <tr><td>Payment method</td><td>Credit or debit card via Stripe. Visa, Mastercard and American Express accepted.</td></tr>
+      <tr><td>Receipt</td><td>A receipt will be emailed to you automatically by Stripe following payment</td></tr>
+      <tr><td>Formula cost</td><td>The cost of your herbal formula is separate to the consultation fee and will be advised by Dr Keane on the call</td></tr>
+    </table>
+
+    <p class="body-text">Your booking is confirmed only once payment has been successfully processed. You will receive a confirmation email and SMS reminder.</p>
+    <p class="body-text">Available consultation times are Monday, Wednesday and Friday — 10:30 am, 10:45 am, 7:00 pm, 7:15 pm, 7:30 pm and 7:45 pm (AEST). Additional times may be added as the Platform grows.</p>
+  </div>
+
+  <!-- S6: CANCELLATION -->
+  <div class="policy-section" id="s6">
+    <p class="sec-num">06</p>
+    <h2 class="sec-title">Cancellation and rescheduling</h2>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Cancellation with more than 24 hours notice</div>
+      <div class="info-body">A full refund will be issued to your original payment method within 5-7 business days.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Cancellation with less than 24 hours notice</div>
+      <div class="info-body">The consultation fee is non-refundable. This is because your appointment time cannot be offered to another patient at short notice.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Rescheduling</div>
+      <div class="info-body">You may reschedule your appointment at no charge with more than 24 hours notice. To reschedule, contact us at info@heathmontchinesemedicine.com.au or (03) 9729 9333.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>If Dr Keane redirects you to clinic</div>
+      <div class="info-body">If Dr Keane determines on the call that your presentation requires a full in-person consultation, your $65.00 consultation fee will be refunded in full within 5-7 business days.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>If Dr Keane is unable to reach you</div>
+      <div class="info-body">Dr Keane will make two call attempts at your booked time. If he is unable to reach you, the consultation fee is non-refundable. Please ensure your mobile number is correct and your phone is available at the booked time.</div>
+    </div>
+  </div>
+
+  <!-- S7: FORMULA FULFILMENT -->
+  <div class="policy-section" id="s7">
+    <p class="sec-num">07</p>
+    <h2 class="sec-title">Formula fulfilment and postage</h2>
+    <p class="body-text">Following your consultation, Dr Keane will prepare your personalised herbal formula at the Heathmont clinic and post it directly to the address you provide.</p>
+
+    <table class="data-table">
+      <tr><th>Item</th><th>Detail</th></tr>
+      <tr><td>Formula format</td><td>Concentrated herbal granules — a powder that dissolves in hot water</td></tr>
+      <tr><td>Preparation time</td><td>1-3 business days from consultation</td></tr>
+      <tr><td>Postage</td><td>Australia Post standard or express — advised at consultation</td></tr>
+      <tr><td>Instructions</td><td>Preparation and dosage instructions included with every formula</td></tr>
+      <tr><td>Validity period</td><td>Dr Keane will advise the period for which your formula is appropriate. Follow-up consultation recommended before reordering.</td></tr>
+    </table>
+
+    <p class="body-text">Herbal formulas are prepared to order and are personalised to your clinical presentation. Returns or refunds on dispensed formulas are not available unless the formula was prepared in error.</p>
+
+    <div class="amber-box">
+      <strong>Important:</strong> Do not take your herbal formula alongside other herbal medicines or supplements without first disclosing them to Dr Keane. Some herbs may interact with prescription medications. Always inform your GP that you are taking a Chinese herbal formula.
+    </div>
+  </div>
+
+  <!-- S8: YOUR RESPONSIBILITIES -->
+  <div class="policy-section" id="s8">
+    <p class="sec-num">08</p>
+    <h2 class="sec-title">Your responsibilities</h2>
+    <p class="body-text">By using the Platform you agree to:</p>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Provide accurate information</div>
+      <div class="info-body">All information you provide through the questionnaire, tongue photograph and booking details must be accurate and complete. Providing inaccurate health information may affect the safety of your formula.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Disclose all medications</div>
+      <div class="info-body">You must disclose all prescription medications, over-the-counter medications and supplements to Dr Keane during your consultation.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Not share your account</div>
+      <div class="info-body">Your account is personal to you. Do not share your login credentials with anyone. Clinical records created on the Platform are specific to you and must not be used by another person.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Seek emergency care when needed</div>
+      <div class="info-body">If you experience a medical emergency at any time, call 000 immediately. Do not use the Platform in place of emergency medical care.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Follow formula instructions</div>
+      <div class="info-body">Take your formula as directed by Dr Keane. Do not exceed the recommended dose. If you experience unexpected side effects, stop taking the formula and contact us or your GP immediately.</div>
+    </div>
+  </div>
+
+  <!-- S9: INTELLECTUAL PROPERTY -->
+  <div class="policy-section" id="s9">
+    <p class="sec-num">09</p>
+    <h2 class="sec-title">Intellectual property</h2>
+    <p class="body-text">All content on the Platform — including the clinical framework, formula compositions, questionnaire logic, educational content, design and branding — is the intellectual property of Dr Justin Keane and Heathmont Chinese Medicine.</p>
+    <p class="body-text">The herbal formulas prescribed through the Platform are proprietary clinical compositions developed by Dr Keane over 20 years of clinical practice. They are prescribed for your personal use only and may not be reproduced, shared or used as the basis for commercial products.</p>
+    <p class="body-text">You may not copy, reproduce, distribute or create derivative works from any content on the Platform without our express written permission.</p>
+  </div>
+
+  <!-- S10: LIMITATION OF LIABILITY -->
+  <div class="policy-section" id="s10">
+    <p class="sec-num">10</p>
+    <h2 class="sec-title">Limitation of liability</h2>
+    <p class="body-text">To the maximum extent permitted by Australian law:</p>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Clinical outcomes</div>
+      <div class="info-body">Chinese herbal medicine, like all healthcare, cannot guarantee specific outcomes. Results vary between individuals depending on the nature and duration of the presenting condition, compliance with the prescribed formula, and other health factors.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Inaccurate information</div>
+      <div class="info-body">We are not liable for any adverse outcomes resulting from inaccurate or incomplete information provided by you through the questionnaire or during the consultation.</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title"><span class="info-dot"></span>Platform availability</div>
+      <div class="info-body">We do not warrant that the Platform will be available at all times. We are not liable for any loss arising from temporary unavailability of the Platform.</div>
+    </div>
+
+    <p class="body-text">Nothing in these Terms excludes, restricts or modifies any right or remedy, or any guarantee, warranty or other term or condition, implied or imposed by any legislation that cannot lawfully be excluded or limited. This includes the Australian Consumer Law.</p>
+    <p class="body-text">Dr Keane holds professional indemnity insurance covering telehealth consultations conducted through the Platform, in accordance with AHPRA requirements.</p>
+  </div>
+
+  <!-- S11: GOVERNING LAW -->
+  <div class="policy-section" id="s11">
+    <p class="sec-num">11</p>
+    <h2 class="sec-title">Governing law</h2>
+    <p class="body-text">These Terms are governed by the laws of Victoria, Australia. Any dispute arising from these Terms or your use of the Platform will be subject to the exclusive jurisdiction of the courts of Victoria.</p>
+    <p class="body-text">We encourage you to contact us in the first instance to resolve any dispute informally before commencing any formal proceedings.</p>
+  </div>
+
+  <!-- S12: CONTACT -->
+  <div class="contact-section" id="s12">
+    <p class="sec-num">12</p>
+    <h2 class="sec-title" style="margin-bottom:16px">Contact us</h2>
+    <p class="body-text" style="margin-bottom:16px">For any questions about these Terms, your consultation, your formula or your account, please contact us.</p>
+    <div class="contact-card">
+      <div class="contact-row"><span class="contact-label">Practice</span><span class="contact-value">Heathmont Chinese Medicine</span></div>
+      <div class="contact-row"><span class="contact-label">Practitioner</span><span class="contact-value">Dr Justin Keane</span></div>
+      <div class="contact-row"><span class="contact-label">ABN</span><span class="contact-value">99 568 668 670</span></div>
+      <div class="contact-row"><span class="contact-label">AHPRA</span><span class="contact-value">CMR0001739870</span></div>
+      <div class="contact-row"><span class="contact-label">Email</span><span class="contact-value"><a href="mailto:info@heathmontchinesemedicine.com.au">info@heathmontchinesemedicine.com.au</a></span></div>
+      <div class="contact-row"><span class="contact-label">Phone</span><span class="contact-value">(03) 9729 9333</span></div>
+      <div class="contact-row"><span class="contact-label">Address</span><span class="contact-value">2/103 Canterbury Road,<br>Heathmont VIC 3135</span></div>
+    </div>
+  </div>
+
+  <div class="version-footer">
+    <p>Terms of Service Version 1.0 &nbsp;·&nbsp; April 2026<br>Justin Keane Chinese Medicine &nbsp;·&nbsp; ABN 99 568 668 670</p>
+  </div>
+
+</div>
+</div>
+
+<script>
+  function scrollTo(id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+</script>
+
+</body>
+</html>
