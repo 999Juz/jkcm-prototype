@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Something Has Changed — Justin Keane Chinese Medicine</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!--
+  ModifiedReorderScreen.html / ModifiedReorderScreen.jsx
+  Justin Keane Chinese Medicine — Women's Health Platform
+
+  The modified reorder questionnaire. Triggered when a patient
+  selects "Something has changed" from their account screen
+  instead of the standard rapid reorder.
+
+  This is a SHORT, focused questionnaire — 5 questions only.
+  It captures what has changed since the last formula so
+  Dr Keane can decide whether to modify the formula or
+  recommend a full follow-up consultation.
+
+  After completing the questionnaire the patient is taken
+  to the tongue photo screen (same as initial flow, reorder mode)
+  then to a submission confirmation screen.
+
+  FLOW:
+    PatientAccountScreen ("Something has changed")
+      → ModifiedReorderScreen (5 questions)
+      → TonguePhotoScreen (mode="modified-reorder")
+      → SubmissionConfirmScreen
+
+  PROPS (for JSX version):
+    onNavigate(screenName, data) — navigation handler
+    onComplete(reorderData)      — called on final submission
+    currentFormula               — the patient's current formula object
+    patient                      — the patient object
+
+  ─────────────────────────────────────────────────────────────────
+  INTEGRATION NOTES — for Peter Nguyen Brown
+  ─────────────────────────────────────────────────────────────────
+
+  1. TRIGGER
+     This screen is reached from PatientAccountScreen when the
+     patient taps "Something has changed". Pass the patient's
+     current formula object as a prop so the screen can display
+     the formula name and reference it in the submission.
+
+  2. BACKEND SUBMISSION
+     After tongue photo upload, POST the following to the backend:
+     {
+       patient_id:          string,
+       formula_id:          string,   // current formula being reordered
+       type:                "modified-reorder",
+       questionnaire: {
+         feeling_vs_before:  string,   // improved | same | worse | mixed
+         what_changed:       string[], // array of selected values
+         new_concern:        string,   // free text
+         energy_temp:        string,   // one of 4 options
+         additional_notes:   string,   // free text, optional
+       },
+       tongue_photo_key:    string,   // S3 key from photo upload
+       submitted_at:        string,   // ISO 8601 timestamp
+     }
+
+  3. PRACTITIONER NOTIFICATION
+     After submission, notify Dr Keane in the practitioner
+     dashboard with:
+       - Patient name and current formula
+       - Modified questionnaire responses
+       - New tongue photo
+       - Previous tongue photo (for comparison)
+       - Flag any complexity indicators (see Question 4 below)
+
+  4. COMPLEXITY FLAGS
+     The following responses should raise a complexity flag
+     in the dashboard notification:
+       - feeling_vs_before === "worse"
+       - what_changed includes "new_pain" or "new_symptom"
+       - energy_temp shifts significantly from original intake
+     These do NOT auto-redirect — Dr Keane reviews and decides.
+
+  5. PATIENT CONFIRMATION
+     After submission, show the confirmation screen and send
+     a confirmation email:
+       Subject: "Your update has been received — Justin Keane CM"
+       Body: brief confirmation that Dr Keane will review
+       and respond within 1 business day.
+
+  6. RESPONSE TIME
+     Set patient expectation: Dr Keane aims to review modified
+     reorder requests within 1 business day. This should be
+     stated on the confirmation screen.
+
+  VERSION: 1.0
+  ─────────────────────────────────────────────────────────────────
+-->
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream:      #FAF5ED;
+  --cream-dark: #F2E9D8;
+  --terra:      #C1673A;
+  --terra-dark: #A3522B;
+  --brown:      #3D2B1F;
+  --brown-mid:  #7A5C45;
+  --brown-lt:   #A07850;
+  --muted:      #8B6E54;
+  --border:     rgba(161,120,80,0.2);
+  --green:      #4A7C59;
+  --green-bg:   #F0F7F2;
+  --amber:      #A07020;
+  --amber-bg:   #FDF5E6;
+  --amber-bdr:  rgba(160,112,32,0.2);
+  --serif:      'Cormorant Garamond', serif;
+  --sans:       'DM Sans', sans-serif;
+}
+
+html, body {
+  font-family: var(--sans);
+  background: #E8E0D4;
+  color: var(--brown);
+  font-size: 16px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+button { font-family: var(--sans); cursor: pointer; }
+textarea { font-family: var(--sans); }
+
+.app-shell { display: flex; justify-content: center; padding: 40px 20px; min-height: 100vh; }
+
+.phone {
+  width: 390px;
+  background: var(--cream);
+  border-radius: 40px;
+  overflow: hidden;
+  box-shadow: 0 40px 80px rgba(61,43,31,0.2);
+  border: 1px solid rgba(161,120,80,0.15);
+}
+
+.notch { height: 34px; display: flex; align-items: center; justify-content: center; background: var(--cream); }
+.notch-bar { width: 110px; height: 4px; background: var(--border); border-radius: 2px; }
+
+/* NAV */
+nav {
+  background: rgba(250,245,237,0.96);
+  backdrop-filter: blur(8px);
+  border-bottom: 0.5px solid var(--border);
+  padding: 13px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-back  { background: none; border: none; font-size: 13px; color: var(--terra); padding: 0; }
+.nav-brand { font-family: var(--serif); font-size: 15px; color: var(--brown-mid); }
+.nav-save  { background: none; border: none; font-size: 12px; color: var(--muted); padding: 0; }
+
+/* PROGRESS */
+.progress-wrap { padding: 14px 24px 0; }
+.progress-row  { display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 11px; color: var(--brown-lt); }
+.progress-track { height: 3px; background: var(--cream-dark); border-radius: 2px; overflow: hidden; }
+.progress-fill  { height: 100%; background: var(--terra); border-radius: 2px; transition: width 0.4s; }
+
+/* STEPS — only one visible at a time */
+.step { display: none; padding: 28px 24px 44px; animation: fadeUp 0.25s ease both; }
+.step.active { display: block; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* CURRENT FORMULA CONTEXT BADGE */
+.formula-context {
+  background: rgba(193,103,58,0.07);
+  border: 1px solid rgba(193,103,58,0.15);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.formula-context-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--terra);
+  flex-shrink: 0;
+}
+
+.formula-context-text {
+  font-size: 12px; color: var(--brown-mid);
+  font-weight: 300; line-height: 1.4;
+}
+
+.formula-context-name {
+  font-family: var(--serif);
+  font-size: 14px; font-weight: 400;
+  color: var(--terra); font-style: italic;
+}
+
+/* QUESTION HEADER */
+.q-num  { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--terra); margin-bottom: 10px; }
+.q-text { font-family: var(--serif); font-size: 24px; font-weight: 400; line-height: 1.25; color: var(--brown); margin-bottom: 8px; }
+.q-text em { font-style: italic; color: var(--terra); }
+.q-sub  { font-size: 13px; color: var(--brown-mid); font-weight: 300; line-height: 1.6; margin-bottom: 24px; }
+.q-multi { font-size: 11px; color: var(--muted); font-weight: 300; margin-bottom: 16px; }
+
+/* OPTIONS */
+.options { display: flex; flex-direction: column; gap: 9px; margin-bottom: 20px; }
+
+.opt {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer; text-align: left;
+  width: 100%; transition: all 0.15s;
+  gap: 10px;
+}
+
+.opt:hover, .opt.selected { border-color: var(--terra); background: #FDF0E8; }
+.opt.flag.selected { border-color: var(--amber); background: var(--amber-bg); }
+
+.opt-text { flex: 1; }
+.opt-label { font-size: 14px; font-weight: 400; color: var(--brown); margin-bottom: 2px; }
+.opt-sub   { font-size: 12px; color: var(--brown-mid); font-weight: 300; }
+
+/* Radio */
+.radio {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1.5px solid var(--border); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.opt.selected .radio { background: var(--terra); border-color: var(--terra); }
+.opt.flag.selected .radio { background: var(--amber); border-color: var(--amber); }
+.radio-inner { width: 8px; height: 8px; border-radius: 50%; background: #fff; display: none; }
+.opt.selected .radio-inner { display: block; }
+
+/* Checkbox */
+.checkbox {
+  width: 22px; height: 22px; border-radius: 6px;
+  border: 1.5px solid var(--border); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: #fff; transition: all 0.15s;
+}
+.opt.selected .checkbox { background: var(--green); border-color: var(--green); }
+.opt.flag.selected .checkbox { background: var(--amber); border-color: var(--amber); }
+
+/* FREE TEXT */
+.free-text-input {
+  width: 100%; padding: 13px 15px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px; font-weight: 300;
+  color: var(--brown); background: #fff;
+  outline: none; resize: none; line-height: 1.6;
+  margin-bottom: 8px;
+  transition: border-color 0.15s;
+}
+.free-text-input:focus { border-color: var(--terra); }
+.free-text-input::placeholder { color: var(--muted); }
+.optional-label { font-size: 11px; color: var(--muted); font-weight: 300; margin-bottom: 16px; }
+
+/* AMBER NOTE */
+.amber-note {
+  background: var(--amber-bg);
+  border: 1px solid var(--amber-bdr);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 12px; color: var(--amber);
+  font-weight: 400; line-height: 1.6;
+  margin-bottom: 16px;
+  display: none;
+}
+.amber-note.visible { display: block; }
+
+/* CONTINUE BUTTON */
+.btn-continue {
+  display: block; width: 100%;
+  background: var(--cream-dark); color: var(--brown-lt);
+  font-size: 14px; font-weight: 500;
+  padding: 15px; border: none;
+  border-radius: 40px;
+  opacity: 0.55; cursor: default;
+  transition: all 0.2s; margin-bottom: 8px;
+}
+.btn-continue.ready { background: var(--terra); color: #fff; opacity: 1; cursor: pointer; }
+.btn-continue.ready:hover { background: var(--terra-dark); }
+
+/* CONFIRMATION SCREEN */
+.confirm-wrap { text-align: center; padding: 16px 0 8px; }
+.confirm-icon { font-size: 40px; margin-bottom: 16px; }
+.confirm-title { font-family: var(--serif); font-size: 28px; font-weight: 400; color: var(--brown); margin-bottom: 10px; line-height: 1.2; }
+.confirm-title em { font-style: italic; color: var(--green); }
+.confirm-body  { font-size: 14px; color: var(--brown-mid); font-weight: 300; line-height: 1.8; margin-bottom: 24px; }
+
+.confirm-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.confirm-card-header {
+  background: var(--cream-dark);
+  padding: 11px 16px;
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--brown-lt);
+  border-bottom: 0.5px solid var(--border);
+}
+
+.confirm-row {
+  display: flex; justify-content: space-between;
+  align-items: flex-start;
+  padding: 10px 16px;
+  border-bottom: 0.5px solid var(--border);
+  font-size: 13px; gap: 12px;
+}
+.confirm-row:last-child { border-bottom: none; }
+.confirm-label { color: var(--brown-lt); font-weight: 300; flex-shrink: 0; }
+.confirm-value { color: var(--brown); font-weight: 400; text-align: right; }
+
+.response-time {
+  background: var(--green-bg);
+  border: 1px solid rgba(74,124,89,0.2);
+  border-radius: 10px;
+  padding: 13px 15px;
+  font-size: 12px; color: var(--green);
+  font-weight: 400; line-height: 1.6;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.btn-home {
+  display: block; width: 100%;
+  background: var(--terra); color: #fff;
+  font-size: 14px; font-weight: 500;
+  padding: 15px; border: none;
+  border-radius: 40px; transition: background 0.2s;
+}
+.btn-home:hover { background: var(--terra-dark); }
+
+@media (max-width: 480px) {
+  body { background: var(--cream); }
+  .app-shell { padding: 0; }
+  .phone { width: 100%; border-radius: 0; box-shadow: none; }
+  .notch { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+<div class="phone">
+  <div class="notch"><div class="notch-bar"></div></div>
+
+  <!-- NAV -->
+  <nav>
+    <button class="nav-back" onclick="goBack()">← Back</button>
+    <span class="nav-brand">Justin Keane CM</span>
+    <button class="nav-save">Save & exit</button>
+  </nav>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap">
+    <div class="progress-row">
+      <span id="step-label">Step 1 of 5</span>
+      <span id="step-pct">20%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width:20%"></div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════
+       STEP 1 — HOW ARE YOU FEELING?
+       Single select, auto-advances
+  ═══════════════════════════════════ -->
+  <div class="step active" id="step-1">
+    <div class="formula-context">
+      <div class="formula-context-dot"></div>
+      <div>
+        <div class="formula-context-text">Currently prescribed</div>
+        <div class="formula-context-name">Harmonise & Chill</div>
+      </div>
+    </div>
+
+    <p class="q-num">Question 1 of 5</p>
+    <h2 class="q-text">How are you feeling compared to when you <em>started your formula?</em></h2>
+    <p class="q-sub">Be honest — there's no wrong answer here.</p>
+
+    <div class="options" data-single="feeling">
+      <button class="opt" onclick="selectSingle(this, 'feeling', 'improved', goNext)">
+        <div class="opt-text">
+          <p class="opt-label">Noticeably improved</p>
+          <p class="opt-sub">I can feel a real difference</p>
+        </div>
+        <div class="radio"><div class="radio-inner"></div></div>
+      </button>
+      <button class="opt" onclick="selectSingle(this, 'feeling', 'some-improvement', goNext)">
+        <div class="opt-text">
+          <p class="opt-label">Some improvement</p>
+          <p class="opt-sub">Better in some areas but not others</p>
+        </div>
+        <div class="radio"><div class="radio-inner"></div></div>
+      </button>
+      <button class="opt" onclick="selectSingle(this, 'feeling', 'same', goNext)">
+        <div class="opt-text">
+          <p class="opt-label">About the same</p>
+          <p class="opt-sub">Not much has changed yet</p>
+        </div>
+        <div class="radio"><div class="radio-inner"></div></div>
+      </button>
+      <button class="opt flag" onclick="selectSingle(this, 'feeling', 'worse', goNext)">
+        <div class="opt-text">
+          <p class="opt-label">Things have gotten worse</p>
+          <p class="opt-sub">Symptoms have increased or changed significantly</p>
+        </div>
+        <div class="radio"><div class="radio-inner"></div></div>
+      </button>
+      <button class="opt" onclick="selectSingle(this, 'feeling', 'mixed', goNext)">
+        <div class="opt-text">
+          <p class="opt-label">Mixed — hard to say</p>
+          <p class="opt-sub">Some things better, some things different</p>
+        </div>
+        <div class="radio"><div class="radio-inner"></div></div>
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════
+       STEP 2 — WHAT HAS CHANGED?
+       Multi select, manual Continue
+  ═══════════════════════════════════ -->
+  <div class="step" id="step-2">
+    <p class="q-num">Question 2 of 5</p>
+    <h2 class="q-text">What has <em>changed most</em> since your last formula?</h2>
+    <p class="q-sub">Select everything that applies.</p>
+    <p class="q-multi">You can choose more than one.</p>
+
+    <!-- Complexity flag note — shown when flagged items selected -->
+    <div class="amber-note" id="flag-note-2">
+      ⚑ Dr Keane will pay close attention to these changes when reviewing your update.
+    </div>
+
+    <div class="options" id="change-opts">
+      <button class="opt" onclick="toggleMulti(this, 'changes', 'energy-improved')">
+        <div class="opt-text"><p class="opt-label">My energy has improved</p></div>
+        <div class="checkbox"></div>
+      </button>
+      <button class="opt" onclick="toggleMulti(this, 'changes', 'skin-improved')">
+        <div class="opt-text"><p class="opt-label">My skin has improved</p></div>
+        <div class="checkbox"></div>
+      </button>
+      <button class="opt" onclick="toggleMulti(this, 'changes', 'cycle-improved')">
+        <div class="opt-text"><p class="opt-label">My cycle has become more regular</p></div>
+        <div class="checkbox"></div>
+      </button>
+      <button class="opt" onclick="toggleMulti(this, 'changes', 'sleep-improved')">
+        <div class="opt-text"><p class="opt-label">My sleep has improved</p></div>
+        <div class="checkbox"></div>
+      </button>
+      <button class="opt flag" onclick="toggleMulti(this, 'changes', 'new-pain', true)">
+        <div class="opt-text">
+          <p class="opt-label">New or increased pain</p>
+          <p class="opt-sub">Pain that wasn't there before, or has gotten worse</p>
+        </div>
+        <div class="checkbox"></div>
+      </button>
+      <button class="opt flag" onclick="toggleMulti(this, 'changes', 'new-symptom', true)">
+        <div class="opt-text">
+          <p class="opt-label">A new symptom has appeared</p>
+          <p class="opt-sub">Something that wasn't part of my original picture</p>
+        </div>
+        <div class="checkbox"></div>
+      </button>
+      <button class="opt" onclick="toggleMulti(this, 'changes', 'mood-changed')">
+        <div class="opt-text"><p class="opt-label">My mood or anxiety has changed</p></div>
+        <div class="checkbox"></div>
+      </button>
+      <button class="opt" onclick="toggleMulti(this, 'changes', 'digestion-changed')">
+        <div class="opt-text"><p class="opt-label">My digestion has changed</p></div>
+        <div class="checkbox"></div>
+      </button>
+    </div>
+
+    <button class="btn-continue" id="btn-step-2" onclick="goNext()">Continue</button>
+  </div>
+
+
+  <!-- ═══════════════════════════════════
+       STEP 3 — NEW OR PRIORITY CONCERN
+       Free text input
+  ═══════════════════════════════════ -->
+  <div class="step" id="step-3">
+    <p class="q-num">Question 3 of 5</p>
+    <h2 class="q-text">Is there a <em>new concern</em> you'd like to address?</h2>
+    <p class="q-sub">Something that has come up since your last consultation, or a priority that has shifted.</p>
+
+    <textarea
+      class="free-text-input"
+      id="new-concern"
+      rows="5"
+      placeholder="e.g. My periods have become heavier over the last few weeks, or I've been getting headaches mid-cycle that I didn't have before..."
+      oninput="checkStep3()">
+    </textarea>
+
+    <p class="optional-label">Leave blank if nothing new has come up.</p>
+
+    <button class="btn-continue ready" id="btn-step-3" onclick="goNext()">Continue</button>
+  </div>
+
+
+  <!-- ═══════════════════════════════════
+       STEP 4 — ENERGY AND TEMPERATURE
+       Single select, auto-advances
+       Key heat/deficiency check
+  ═══════════════════════════════════ -->
+  <div class="step" id="step-4">
+    <p class="q-num">Question 4 of 5</p>
+    <h2 class="q-text">How is your <em>energy and temperature</em> running right now?</h2>
+    <p class="q-sub">Compared to when you first came to us — has anything shifted?</p>
+
+    <div class="options" data-single="energy-temp">
+      <button class="opt" onclick="selectSingle(this, 'energyTemp', 'same', goNext)">
+        <div class="opt-text">
+          <p class="opt-label">About the same as before</p>
+          <p class="opt-sub">No significant change in energy or temperature</p>
+        </div>
+        <div class="radio"><div class="radio-inner"></div></div>
+      </button>
+      <button class="opt" onclick="selectSingle(this, 'energyTemp', 'more-hot', goNext)">
+        <div class="opt-text">
+          <p class="opt-label">Running hotter than before</p>
+          <p class="opt-sub">More heat signs — hot flushes, night sweats, irritability</p>
+        </div>
+        <div class="radio"><div class="radio-inner"></div></div>
+      </button>
+      <button class="opt" onclick="selectSingle(this, 'energyTemp', 'more-cold', goNext)">
+        <div class="opt-text">
+          <p class="opt-label">Running colder or more depleted</p>
+          <p class="opt-sub">More tired, cold, flat or heavy than before</p>
+        </div>
+        <div class="radio"><div class="radio-inner"></div></div>
+      </button>
+      <button class="opt" onclick="selectSingle(this, 'energyTemp', 'more-energy', goNext)">
+        <div class="opt-text">
+          <p class="opt-label">More energy than before</p>
+          <p class="opt-sub">Feeling more vital, clearer, lighter</p>
+        </div>
+        <div class="radio"><div class="radio-inner"></div></div>
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════
+       STEP 5 — ANYTHING ELSE
+       Free text, optional
+       Then proceeds to tongue photo
+  ═══════════════════════════════════ -->
+  <div class="step" id="step-5">
+    <p class="q-num">Question 5 of 5</p>
+    <h2 class="q-text">Anything else Dr Keane should <em>know?</em></h2>
+    <p class="q-sub">Any medications, life changes, stressors or context that might be relevant. This is your chance to tell the full story.</p>
+
+    <textarea
+      class="free-text-input"
+      id="additional-notes"
+      rows="5"
+      placeholder="Optional — share anything that feels relevant. e.g. I started a new job last month and my stress levels are much higher, or I've been unwell with a virus recently..."
+    ></textarea>
+
+    <p class="optional-label">This field is optional.</p>
+
+    <button class="btn-continue ready" id="btn-step-5" onclick="goToTongue()">
+      Continue — take tongue photo
+    </button>
+
+    <p style="text-align:center; font-size:11px; color:var(--muted); margin-top:8px; font-weight:300;">
+      One more step — we need a new tongue photo before Dr Keane reviews your update
+    </p>
+  </div>
+
+
+  <!-- ═══════════════════════════════════
+       CONFIRMATION SCREEN
+       Shown after tongue photo submitted
+  ═══════════════════════════════════ -->
+  <div class="step" id="step-confirm">
+    <div class="confirm-wrap">
+      <div class="confirm-icon">🌿</div>
+      <h2 class="confirm-title">Update <em>received.</em></h2>
+      <p class="confirm-body">
+        Thank you — Dr Keane has everything he needs to review your update. He'll assess your new tongue photo alongside your previous one and respond with next steps.
+      </p>
+    </div>
+
+    <div class="confirm-card">
+      <div class="confirm-card-header">Your submission</div>
+      <div class="confirm-row">
+        <span class="confirm-label">Current formula</span>
+        <span class="confirm-value" style="font-family:var(--serif);font-style:italic;color:var(--terra);">Harmonise & Chill</span>
+      </div>
+      <div class="confirm-row">
+        <span class="confirm-label">Submitted</span>
+        <span class="confirm-value" id="submitted-date">Today</span>
+      </div>
+      <div class="confirm-row">
+        <span class="confirm-label">Tongue photo</span>
+        <span class="confirm-value" style="color:var(--green);">✓ Uploaded</span>
+      </div>
+      <div class="confirm-row">
+        <span class="confirm-label">Status</span>
+        <span class="confirm-value" style="color:var(--amber);">Awaiting Dr Keane's review</span>
+      </div>
+    </div>
+
+    <div class="response-time">
+      <strong style="font-weight:500;">What happens next:</strong> Dr Keane aims to review your update within 1 business day. You'll receive an email when he's responded — either with a modified formula invoice or a recommendation to book a follow-up consultation.
+    </div>
+
+    <button class="btn-home" onclick="alert('Return to account screen')">
+      Back to my account
+    </button>
+  </div>
+
+
+</div><!-- end phone -->
+</div><!-- end app-shell -->
+
+<script>
+// ─────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────
+const answers = {
+  feeling:    null,
+  changes:    [],
+  newConcern: '',
+  energyTemp: null,
+  notes:      '',
+};
+
+let currentStep = 1;
+const history   = [1];
+const TOTAL     = 5;
+
+
+// ─────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────
+function setProgress(step) {
+  const pct = Math.round((step / TOTAL) * 100);
+  document.getElementById('step-label').textContent = 'Step ' + step + ' of ' + TOTAL;
+  document.getElementById('step-pct').textContent   = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+function showStep(num) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('step-' + num);
+  if (el) {
+    el.classList.add('active');
+    currentStep = num;
+  }
+  if (typeof num === 'number') setProgress(num);
+  document.querySelector('.phone').scrollTop = 0;
+  window.scrollTo(0, 0);
+}
+
+function goNext() {
+  const next = currentStep + 1;
+  history.push(next);
+  showStep(next);
+}
+
+function goBack() {
+  if (history.length <= 1) return;
+  history.pop();
+  const prev = history[history.length - 1];
+  showStep(prev);
+}
+
+function goToTongue() {
+  // In production: navigate to TonguePhotoScreen with mode="modified-reorder"
+  // For prototype: jump straight to confirmation
+  history.push('confirm');
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-confirm').classList.add('active');
+
+  // Update progress to complete
+  document.getElementById('progress-fill').style.width = '100%';
+  document.getElementById('progress-fill').style.background = '#4A7C59';
+  document.getElementById('step-label').textContent = 'Complete';
+  document.getElementById('step-pct').textContent = '100%';
+
+  // Set submitted date
+  const now = new Date();
+  document.getElementById('submitted-date').textContent =
+    now.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  window.scrollTo(0, 0);
+}
+
+
+// ─────────────────────────────────────────
+// OPTION HANDLERS
+// ─────────────────────────────────────────
+
+// Single select — saves value and calls callback after delay
+function selectSingle(btn, field, value, callback) {
+  const parent = btn.closest('.options') ||
+                 btn.parentElement;
+
+  // Clear siblings
+  parent.querySelectorAll('.opt').forEach(b => {
+    b.classList.remove('selected');
+    const ri = b.querySelector('.radio-inner');
+    if (ri) ri.style.display = 'none';
+  });
+
+  // Select this option
+  btn.classList.add('selected');
+  const ri = btn.querySelector('.radio-inner');
+  if (ri) ri.style.display = 'block';
+
+  // Save answer
+  answers[field] = value;
+
+  // Auto-advance after short delay
+  setTimeout(callback, 280);
+}
+
+// Multi select — toggles, enables Continue when ≥1 selected
+function toggleMulti(btn, field, value, isFlag) {
+  btn.classList.toggle('selected');
+  const cb = btn.querySelector('.checkbox');
+
+  if (btn.classList.contains('selected')) {
+    if (!answers[field]) answers[field] = [];
+    if (!answers[field].includes(value)) answers[field].push(value);
+    if (cb) cb.textContent = '✓';
+    if (isFlag) btn.classList.add('flag');
+  } else {
+    if (answers[field]) {
+      answers[field] = answers[field].filter(v => v !== value);
+    }
+    if (cb) cb.textContent = '';
+    if (isFlag) btn.classList.remove('flag');
+  }
+
+  // Show flag note if any flagged items are selected
+  const hasFlagSelected = document.querySelectorAll('#change-opts .opt.flag.selected').length > 0;
+  document.getElementById('flag-note-2').classList.toggle('visible', hasFlagSelected);
+
+  // Enable Continue when at least one option selected
+  const total = answers[field] ? answers[field].length : 0;
+  const btn2  = document.getElementById('btn-step-2');
+  if (btn2) btn2.classList.toggle('ready', total > 0);
+}
+
+// Step 3 — free text always valid (optional field handled on step 5)
+function checkStep3() {
+  answers.newConcern = document.getElementById('new-concern').value;
+  // Continue is always enabled on step 3 — the field is optional
+}
+
+
+// Initialise
+setProgress(1);
+</script>
+
+</body>
+</html>
