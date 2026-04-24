@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Error Screens — Justin Keane Chinese Medicine</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #FAF5ED; --cream-dark: #F2E9D8; --terra: #C1673A; --terra-dark: #A3522B;
+  --brown: #3D2B1F; --brown-mid: #7A5C45; --brown-lt: #A07850; --muted: #8B6E54;
+  --border: rgba(161,120,80,0.2); --green: #4A7C59; --green-bg: #F0F7F2;
+  --amber: #A07020; --amber-bg: #FDF5E6; --amber-bdr: rgba(160,112,32,0.2);
+  --red: #B03A2E; --red-bg: #FDF0EE; --red-bdr: rgba(176,58,46,0.2);
+  --serif: 'Cormorant Garamond', serif; --sans: 'DM Sans', sans-serif;
+}
+html, body { font-family: var(--sans); background: #E8E0D4; color: var(--brown); font-size: 16px; line-height: 1.7; min-height: 100vh; }
+button { font-family: var(--sans); cursor: pointer; }
+.page-wrap { max-width: 900px; margin: 0 auto; padding: 40px 24px 60px; }
+.page-tag { font-family: var(--serif); font-size: 13px; color: var(--brown-lt); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+.page-headline { font-family: var(--serif); font-size: 32px; font-weight: 400; color: var(--brown); margin-bottom: 8px; line-height: 1.2; }
+.page-sub { font-size: 14px; color: var(--brown-mid); font-weight: 300; line-height: 1.7; margin-bottom: 40px; max-width: 560px; }
+.screen-tabs { display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap; }
+.screen-tab { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); background: var(--cream); font-size: 12px; font-weight: 400; color: var(--brown-mid); cursor: pointer; transition: all 0.15s; }
+.screen-tab:hover { background: var(--cream-dark); }
+.screen-tab.active { background: var(--brown); color: var(--cream); border-color: var(--brown); font-weight: 500; }
+.phone-wrap { display: flex; justify-content: center; }
+.phone { width: 390px; background: var(--cream); border-radius: 40px; overflow: hidden; box-shadow: 0 40px 80px rgba(61,43,31,0.2); border: 1px solid rgba(161,120,80,0.15); }
+.notch { height: 34px; display: flex; align-items: center; justify-content: center; background: var(--cream); }
+.notch-bar { width: 110px; height: 4px; background: var(--border); border-radius: 2px; }
+nav { background: rgba(250,245,237,0.96); border-bottom: 0.5px solid var(--border); padding: 13px 20px; display: flex; justify-content: space-between; align-items: center; }
+.nav-brand-name { font-family: var(--serif); font-size: 17px; font-weight: 500; color: var(--brown); line-height: 1.2; }
+.nav-brand-sub { font-size: 10px; font-weight: 300; color: var(--brown-lt); letter-spacing: 0.06em; text-transform: uppercase; }
+.nav-help { background: none; border: none; font-size: 12px; color: var(--brown-lt); padding: 0; }
+.error-screen { display: none; padding: 44px 24px 48px; text-align: center; animation: fadeUp 0.25s ease both; }
+.error-screen.active { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.error-icon-wrap { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 28px; }
+.icon-red { background: var(--red-bg); border: 1px solid var(--red-bdr); }
+.icon-amber { background: var(--amber-bg); border: 1px solid var(--amber-bdr); }
+.icon-muted { background: var(--cream-dark); border: 1px solid var(--border); }
+.error-badge { display: inline-block; font-size: 10px; font-weight: 500; letter-spacing: 0.09em; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; margin-bottom: 14px; }
+.badge-red { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-bdr); }
+.badge-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-bdr); }
+.badge-muted { background: var(--cream-dark); color: var(--brown-lt); border: 1px solid var(--border); }
+.error-title { font-family: var(--serif); font-size: 28px; font-weight: 400; color: var(--brown); line-height: 1.2; margin-bottom: 10px; }
+.error-title em { font-style: italic; color: var(--terra); }
+.error-body { font-size: 14px; color: var(--brown-mid); font-weight: 300; line-height: 1.8; margin-bottom: 20px; text-align: left; }
+.what-happened { background: #fff; border: 1px solid var(--border); border-radius: 13px; padding: 16px 18px; margin-bottom: 18px; text-align: left; }
+.what-happened-label { font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brown-lt); margin-bottom: 10px; }
+.what-happened-item { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; color: var(--brown-mid); font-weight: 300; line-height: 1.6; }
+.what-happened-item:last-child { border-bottom: none; }
+.item-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+.dot-green { background: var(--green); }
+.dot-red { background: var(--red); }
+.dot-amber { background: var(--amber); }
+.reassurance { background: var(--green-bg); border: 1px solid rgba(74,124,89,0.2); border-radius: 10px; padding: 12px 14px; font-size: 12px; color: var(--green); font-weight: 400; line-height: 1.6; margin-bottom: 18px; text-align: left; }
+.btn-primary { display: block; width: 100%; background: var(--terra); color: #fff; font-size: 14px; font-weight: 500; padding: 15px; border: none; border-radius: 40px; letter-spacing: 0.02em; transition: background 0.2s; margin-bottom: 10px; font-family: var(--sans); }
+.btn-primary:hover { background: var(--terra-dark); }
+.btn-secondary { display: block; width: 100%; background: transparent; border: 1px solid var(--border); border-radius: 40px; padding: 13px; font-size: 13px; font-weight: 400; color: var(--brown-mid); margin-bottom: 10px; transition: all 0.15s; font-family: var(--sans); }
+.btn-secondary:hover { background: var(--cream-dark); }
+.divider { border: none; border-top: 0.5px solid var(--border); margin: 20px 0; }
+.support-note { font-size: 12px; color: var(--muted); font-weight: 300; line-height: 1.7; margin-top: 16px; }
+.support-link { color: var(--terra); text-decoration: none; font-weight: 400; }
+.ref-number { font-size: 11px; color: var(--brown-lt); font-weight: 300; margin-top: 8px; letter-spacing: 0.04em; }
+@media (max-width: 480px) { body { background: var(--cream); } .page-wrap { padding: 20px 16px 40px; } .phone { width: 100%; border-radius: 0; box-shadow: none; } .notch { display: none; } }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+  <p class="page-tag">Justin Keane Chinese Medicine</p>
+  <h1 class="page-headline">Platform Error Screens</h1>
+  <p class="page-sub">Four error states — payment failure, booking conflict, photo upload issue and session expiry. Each is calm, clear and always gives the patient a way forward.</p>
+
+  <div class="screen-tabs">
+    <button class="screen-tab active" onclick="showError('payment',this)">1 — Payment failed</button>
+    <button class="screen-tab" onclick="showError('booking',this)">2 — Booking unavailable</button>
+    <button class="screen-tab" onclick="showError('photo',this)">3 — Photo upload failed</button>
+    <button class="screen-tab" onclick="showError('session',this)">4 — Session expired</button>
+  </div>
+
+  <div class="phone-wrap">
+  <div class="phone">
+    <div class="notch"><div class="notch-bar"></div></div>
+    <nav>
+      <div>
+        <div class="nav-brand-name">Justin Keane</div>
+        <div class="nav-brand-sub">Chinese Medicine</div>
+      </div>
+      <button class="nav-help">Need help?</button>
+    </nav>
+
+    <!-- ERROR 1: PAYMENT FAILED -->
+    <div class="error-screen active" id="error-payment">
+      <div class="error-icon-wrap icon-red">💳</div>
+      <span class="error-badge badge-red">Payment unsuccessful</span>
+      <h1 class="error-title">Your payment <em>didn't go through.</em></h1>
+      <p class="error-body">Don't worry — this happens sometimes and it's easily fixed. Your appointment time is still being held for you for the next 10 minutes while you try again.</p>
+      <div class="what-happened">
+        <p class="what-happened-label">What we know</p>
+        <div class="what-happened-item"><div class="item-dot dot-green"></div><span>Your questionnaire responses and tongue photo are saved</span></div>
+        <div class="what-happened-item"><div class="item-dot dot-green"></div><span>Your selected appointment time is held for 10 minutes</span></div>
+        <div class="what-happened-item"><div class="item-dot dot-red"></div><span>No payment was taken — your card has not been charged</span></div>
+      </div>
+      <div class="reassurance">The most common reasons are an incorrect card number, an expired card, or insufficient funds. Check your details and try again.</div>
+      <button class="btn-primary">Try again with a different card</button>
+      <button class="btn-secondary">Choose a different appointment time</button>
+      <hr class="divider">
+      <p class="support-note">If this keeps happening, please contact us and we'll get you booked in manually.<br>
+        <a href="tel:0397299333" class="support-link">(03) 9729 9333</a> &nbsp;·&nbsp;
+        <a href="mailto:info@heathmontchinesemedicine.com.au" class="support-link">Email us</a>
+      </p>
+      <p class="ref-number" id="payment-ref"></p>
+    </div>
+
+    <!-- ERROR 2: BOOKING UNAVAILABLE -->
+    <div class="error-screen" id="error-booking">
+      <div class="error-icon-wrap icon-amber">📅</div>
+      <span class="error-badge badge-amber">Time no longer available</span>
+      <h1 class="error-title">That time was just <em>taken.</em></h1>
+      <p class="error-body">Someone else booked that appointment at the same moment. This doesn't happen often, and we're sorry for the inconvenience. Your payment has been fully refunded.</p>
+      <div class="what-happened">
+        <p class="what-happened-label">What we've done</p>
+        <div class="what-happened-item"><div class="item-dot dot-green"></div><span>Your payment has been fully refunded — no charge was made</span></div>
+        <div class="what-happened-item"><div class="item-dot dot-green"></div><span>Your questionnaire responses and tongue photo are saved</span></div>
+        <div class="what-happened-item"><div class="item-dot dot-amber"></div><span>The time you selected is no longer available</span></div>
+      </div>
+      <p class="error-body">Please choose another available time. Refunds typically appear within 3–5 business days depending on your bank.</p>
+      <button class="btn-primary">Choose another time</button>
+      <hr class="divider">
+      <p class="support-note">If you'd prefer us to book you in directly, please call us.<br>
+        <a href="tel:0397299333" class="support-link">(03) 9729 9333</a> &nbsp;·&nbsp;
+        <a href="mailto:info@heathmontchinesemedicine.com.au" class="support-link">Email us</a>
+      </p>
+      <p class="ref-number" id="booking-ref"></p>
+    </div>
+
+    <!-- ERROR 3: PHOTO UPLOAD FAILED -->
+    <div class="error-screen" id="error-photo">
+      <div class="error-icon-wrap icon-amber">📷</div>
+      <span class="error-badge badge-amber">Photo not uploaded</span>
+      <h1 class="error-title">We couldn't save <em>your photo.</em></h1>
+      <p class="error-body">Something went wrong when uploading your tongue photo. This is usually a connection issue or an unsupported file type. Your progress is saved — just try again.</p>
+      <div class="what-happened">
+        <p class="what-happened-label">Common causes</p>
+        <div class="what-happened-item"><div class="item-dot dot-amber"></div><span>Slow or interrupted internet connection during upload</span></div>
+        <div class="what-happened-item"><div class="item-dot dot-amber"></div><span>File type not supported — we accept JPEG and PNG only</span></div>
+        <div class="what-happened-item"><div class="item-dot dot-amber"></div><span>File size too large — please keep photos under 10MB</span></div>
+      </div>
+      <div class="reassurance">Your questionnaire responses are saved. You only need to retake or re-upload the photo — you won't need to fill in the questionnaire again.</div>
+      <button class="btn-primary">Try uploading again</button>
+      <button class="btn-secondary">Take a new photo instead</button>
+      <hr class="divider">
+      <p class="support-note">Still having trouble? Contact us and we can arrange an alternative way to share your photo.<br>
+        <a href="tel:0397299333" class="support-link">(03) 9729 9333</a> &nbsp;·&nbsp;
+        <a href="mailto:info@heathmontchinesemedicine.com.au" class="support-link">Email us</a>
+      </p>
+    </div>
+
+    <!-- ERROR 4: SESSION EXPIRED -->
+    <div class="error-screen" id="error-session">
+      <div class="error-icon-wrap icon-muted">⏱</div>
+      <span class="error-badge badge-muted">Session ended</span>
+      <h1 class="error-title">You've been <em>signed out.</em></h1>
+      <p class="error-body">For your security, we sign you out after a period of inactivity. Your questionnaire responses have been saved — just sign back in to pick up where you left off.</p>
+      <div class="what-happened">
+        <p class="what-happened-label">What's been saved</p>
+        <div class="what-happened-item"><div class="item-dot dot-green"></div><span>Your questionnaire responses are saved on this device</span></div>
+        <div class="what-happened-item"><div class="item-dot dot-green"></div><span>Your tongue photo is saved if the upload completed</span></div>
+        <div class="what-happened-item"><div class="item-dot dot-green"></div><span>Your account and formula history are safe</span></div>
+      </div>
+      <button class="btn-primary">Sign back in</button>
+      <button class="btn-secondary">Start from the beginning</button>
+      <hr class="divider">
+      <p class="support-note">If you're having trouble signing in, please contact us.<br>
+        <a href="tel:0397299333" class="support-link">(03) 9729 9333</a> &nbsp;·&nbsp;
+        <a href="mailto:info@heathmontchinesemedicine.com.au" class="support-link">Email us</a>
+      </p>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<script>
+function showError(name, btn) {
+  document.querySelectorAll('.error-screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('error-' + name).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (name === 'payment') document.getElementById('payment-ref').textContent = 'Reference: JKCM-' + Math.random().toString(36).substr(2,8).toUpperCase();
+  if (name === 'booking') document.getElementById('booking-ref').textContent = 'Refund reference: RF-' + Math.random().toString(36).substr(2,8).toUpperCase();
+}
+</script>
+</body>
+</html>
