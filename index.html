@@ -3703,7 +3703,6 @@ html, body {
 
   <!-- BOOKING -->
   <div class="screen-panel" id="panel-booking">
-</div>
 
   <nav>
     <a class="nav-back" onclick="goBack()" href="#">&#8592; Back</a>
@@ -3911,6 +3910,7 @@ html, body {
   </div>
 
 </div>
+</div><!-- end panel-booking -->
 
 <script>
   let state = {
@@ -4330,16 +4330,7 @@ document.querySelectorAll('#panel-home .nav-links a').forEach(a => {
     setProgress(5, 7);
   }
 
-  function goToTongueFromQuestionnaire() {
-    setTimeout(function() {
-      document.querySelectorAll('.screen-panel').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-      document.getElementById('panel-tongue').classList.add('active');
-      document.getElementById('tab-tongue').classList.add('active');
-      document.querySelector('.phone-frame') && (document.querySelector('.phone-frame').scrollTop = 0);
-      window.scrollTo(0, 0);
-    }, 50);
-  }
+  // goToTongueFromQuestionnaire() defined in questionnaire section above
 
   // PAIN SCREEN LOGIC
   const painZones = new Set();
@@ -4526,9 +4517,7 @@ document.querySelectorAll('#panel-home .nav-links a').forEach(a => {
     document.getElementById('btn-continue').classList.remove('ready');
   }
 
-  function proceed() {
-    alert('Booking calendar would open here.');
-  }
+  // proceed() defined in tongue photo section above
 
 
 // Learn FAQ logic
