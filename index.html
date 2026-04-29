@@ -3341,9 +3341,14 @@ html, body {
   }
 
   function goToTongueFromQuestionnaire() {
-    // Navigate from questionnaire result to tongue photo screen
-    // Uses the main showPanel function to switch to the tongue tab
-    showPanel('tongue');
+    setTimeout(function() {
+      document.querySelectorAll('.screen-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('panel-tongue').classList.add('active');
+      document.getElementById('tab-tongue').classList.add('active');
+      document.querySelector('.phone-frame') && (document.querySelector('.phone-frame').scrollTop = 0);
+      window.scrollTo(0, 0);
+    }, 50);
   }
 
   // PAIN SCREEN LOGIC
@@ -3683,7 +3688,15 @@ html, body {
 
   function proceed() {
     // Navigate from tongue photo to booking screen
-    showPanel('booking');
+    // Use setTimeout to ensure we're in global scope
+    setTimeout(function() {
+      document.querySelectorAll('.screen-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('panel-booking').classList.add('active');
+      document.getElementById('tab-booking').classList.add('active');
+      document.querySelector('.phone-frame') && (document.querySelector('.phone-frame').scrollTop = 0);
+      window.scrollTo(0, 0);
+    }, 50);
   }
 </script>
   </div>
@@ -4318,9 +4331,14 @@ document.querySelectorAll('#panel-home .nav-links a').forEach(a => {
   }
 
   function goToTongueFromQuestionnaire() {
-    // Navigate from questionnaire result to tongue photo screen
-    // Uses the main showPanel function to switch to the tongue tab
-    showPanel('tongue');
+    setTimeout(function() {
+      document.querySelectorAll('.screen-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('panel-tongue').classList.add('active');
+      document.getElementById('tab-tongue').classList.add('active');
+      document.querySelector('.phone-frame') && (document.querySelector('.phone-frame').scrollTop = 0);
+      window.scrollTo(0, 0);
+    }, 50);
   }
 
   // PAIN SCREEN LOGIC
