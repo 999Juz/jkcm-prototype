@@ -1114,12 +1114,18 @@ button{cursor:pointer;}
 const PANELS = ['home','learn','q','tongue','booking','account-create','account','modified-reorder','error'];
 
 function goTo(name) {
+  // Hide all panels and deactivate all nav tabs
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   PANELS.forEach(p => {
-    document.getElementById('panel-' + p).classList.remove('active');
-    document.getElementById('tab-' + p).classList.remove('active');
+    const tab = document.getElementById('tab-' + p);
+    if (tab) tab.classList.remove('active');
   });
-  document.getElementById('panel-' + name).classList.add('active');
-  document.getElementById('tab-' + name).classList.add('active');
+  // Show target panel
+  const panel = document.getElementById('panel-' + name);
+  if (panel) panel.classList.add('active');
+  // Activate nav tab if it exists
+  const tab = document.getElementById('tab-' + name);
+  if (tab) tab.classList.add('active');
   window.scrollTo(0, 0);
 }
 
@@ -1285,10 +1291,10 @@ function toggleNoPain() {
     document.getElementById('zones-selected').style.display = 'none';
     document.getElementById('pain-detail').classList.remove('show');
     btn.classList.add('sel');
-    btn.textContent = '✓  I don\'t experience pain in these areas';
+    btn.textContent = '\u2713  I do not experience pain in these areas';
   } else {
     btn.classList.remove('sel');
-    btn.textContent = 'I don\'t experience pain in these areas';
+    btn.textContent = 'I do not experience pain in these areas';
   }
 }
 
@@ -1508,9 +1514,9 @@ function setACMode(mode) {
   document.getElementById('ac-sub').textContent      = isNew ? 'Creating a free account lets you track your formula and reorder without starting over.' : 'Sign in to access your formula history, reorder, or book a follow-up.';
   document.getElementById('ac-submit').textContent   = isNew ? 'Create account & continue to booking' : 'Sign in & continue to booking';
   document.getElementById('ac-password').placeholder = isNew ? 'Choose a password' : 'Your password';
-  document.getElementById('ac-switch-text').innerHTML = isNew
-    ? 'Already have an account? <button onclick="setACMode('return')" style="background:none;border:none;color:var(--terra);font-weight:500;font-size:13px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(193,103,58,0.3);">Sign in</button>'
-    : 'Don't have an account? <button onclick="setACMode('new')" style="background:none;border:none;color:var(--terra);font-weight:500;font-size:13px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(193,103,58,0.3);">Create one</button>';
+  var switchEl = document.getElementById('ac-switch-text');
+  if (isNew) { switchEl.innerHTML = 'Already have an account? <button onclick="setACMode(\'return\')" style="background:none;border:none;color:var(--terra);font-weight:500;font-size:13px;cursor:pointer;">Sign in</button>'; }
+  else { switchEl.innerHTML = 'New patient? <button onclick="setACMode(\'new\')" style="background:none;border:none;color:var(--terra);font-weight:500;font-size:13px;cursor:pointer;">Create an account</button>'; }
   checkACForm();
 }
 
@@ -1626,87 +1632,56 @@ function toggleMR(btn) {
 // ─────────────────────────────────────
 // ERROR SCREENS
 // ─────────────────────────────────────
-const ERROR_CONFIGS = {
+var ERROR_CONFIGS = {
   payment: {
     icon: '💳', badge: 'Payment unsuccessful', badgeColor: '#B03A2E', badgeBg: '#FDF0EE',
-    title: "Your payment <em style='font-style:italic;color:var(--terra)'>didn't go through.</em>",
-    body: "Don't worry — this happens sometimes. Your appointment time is held for 10 minutes. No payment was taken.",
+    title: 'Your payment <em style="font-style:italic;color:#C1673A">did not go through.</em>',
+    body: 'No need to worry — your appointment time is held for 10 minutes. No payment was taken.',
     btn1: { label: 'Try again with a different card', action: "goTo('booking')" },
     btn2: { label: 'Choose a different appointment time', action: "goTo('booking')" },
   },
   booking: {
     icon: '📅', badge: 'Time no longer available', badgeColor: '#A07020', badgeBg: '#FDF5E6',
-    title: "That time was just <em style='font-style:italic;color:var(--terra)'>taken.</em>",
-    body: "Someone else booked that appointment at the same moment. Your payment has been fully refunded.",
+    title: 'That time was just <em style="font-style:italic;color:#C1673A">taken.</em>',
+    body: 'Someone else booked at the same moment. Your payment has been fully refunded.',
     btn1: { label: 'Choose another time', action: "goTo('booking')" },
     btn2: null,
   },
   photo: {
     icon: '📷', badge: 'Photo not uploaded', badgeColor: '#A07020', badgeBg: '#FDF5E6',
-    title: "We couldn't save <em style='font-style:italic;color:var(--terra)'>your photo.</em>",
-    body: "Something went wrong during upload. Your questionnaire responses are saved — just try again.",
+    title: 'We were unable to save <em style="font-style:italic;color:#C1673A">your photo.</em>',
+    body: 'Something went wrong during upload. Your questionnaire responses are saved — just try again.',
     btn1: { label: 'Try uploading again', action: "goTo('tongue')" },
     btn2: { label: 'Take a new photo instead', action: "goTo('tongue')" },
   },
   session: {
     icon: '⏱', badge: 'Session ended', badgeColor: '#A07850', badgeBg: '#F2E9D8',
-    title: "You've been <em style='font-style:italic;color:var(--terra)'>signed out.</em>",
-    body: "For your security, we sign you out after a period of inactivity. Your questionnaire responses have been saved.",
+    title: 'You have been <em style="font-style:italic;color:#C1673A">signed out.</em>',
+    body: 'For your security, we sign you out after a period of inactivity. Your questionnaire responses have been saved.',
     btn1: { label: 'Sign back in', action: "goTo('account-create')" },
     btn2: { label: 'Start from the beginning', action: "goTo('home')" },
   },
 };
 
 function showError(type) {
-  const cfg = ERROR_CONFIGS[type];
+  var cfg = ERROR_CONFIGS[type];
   if (!cfg) return;
-  const content = document.getElementById('error-content');
-  content.innerHTML = `
-    <div style="width:64px;height:64px;border-radius:50%;background:${cfg.badgeBg};border:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:26px;">${cfg.icon}</div>
-    <span style="display:inline-block;font-size:10px;font-weight:500;letter-spacing:0.09em;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:14px;background:${cfg.badgeBg};color:${cfg.badgeColor};border:1px solid rgba(0,0,0,0.06);">${cfg.badge}</span>
-    <h1 style="font-family:var(--serif);font-size:26px;font-weight:400;color:var(--brown);line-height:1.25;margin-bottom:12px;">${cfg.title}</h1>
-    <p style="font-size:14px;color:var(--brown-mid);font-weight:300;line-height:1.8;margin-bottom:22px;text-align:left;">${cfg.body}</p>
-    <button class="btn-primary" onclick="${cfg.btn1.action}">${cfg.btn1.label}</button>
-    ${cfg.btn2 ? `<button class="btn-outline" onclick="${cfg.btn2.action}">${cfg.btn2.label}</button>` : ''}
-    <hr class="divider" style="margin:20px 0;">
-    <p style="font-size:12px;color:var(--muted);font-weight:300;line-height:1.7;">
-      Need help? <a href="tel:0397299333" style="color:var(--terra);font-weight:400;">(03) 9729 9333</a>
-      &nbsp;·&nbsp;
-      <a href="mailto:info@heathmontchinesemedicine.com.au" style="color:var(--terra);font-weight:400;">Email us</a>
-    </p>
-  `;
+  var el = document.getElementById('error-content');
+  var btn2html = cfg.btn2 ? '<button class="btn-outline" onclick="' + cfg.btn2.action + '">' + cfg.btn2.label + '</button>' : '';
+  el.innerHTML =
+    '<div style="width:64px;height:64px;border-radius:50%;background:' + cfg.badgeBg + ';border:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:26px;">' + cfg.icon + '</div>' +
+    '<span style="display:inline-block;font-size:10px;font-weight:500;letter-spacing:0.09em;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:14px;background:' + cfg.badgeBg + ';color:' + cfg.badgeColor + ';border:1px solid rgba(0,0,0,0.06);">' + cfg.badge + '</span>' +
+    '<h1 style="font-family:var(--serif);font-size:26px;font-weight:400;color:var(--brown);line-height:1.25;margin-bottom:12px;">' + cfg.title + '</h1>' +
+    '<p style="font-size:14px;color:var(--brown-mid);font-weight:300;line-height:1.8;margin-bottom:22px;text-align:left;">' + cfg.body + '</p>' +
+    '<button class="btn-primary" onclick="' + cfg.btn1.action + '">' + cfg.btn1.label + '</button>' +
+    btn2html +
+    '<hr class="divider" style="margin:20px 0;">' +
+    '<p style="font-size:12px;color:var(--muted);font-weight:300;line-height:1.7;">Need help? <a href="tel:0397299333" style="color:var(--terra);font-weight:400;">(03) 9729 9333</a> &nbsp;&middot;&nbsp; <a href="mailto:info@heathmontchinesemedicine.com.au" style="color:var(--terra);font-weight:400;">Email us</a></p>';
   goTo('error');
 }
 
-// ─────────────────────────────────────
-// WIRE UP — update existing goTo to handle
-// account tab in bottom nav
-// ─────────────────────────────────────
-// Override goTo to handle panels not in bottom nav
-const _originalGoTo = goTo;
-window.goTo = function(name) {
-  const BOTTOM_NAV_PANELS = ['home','learn','q','tongue','booking'];
-  // Hide all panels
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  // Update bottom nav tabs
-  BOTTOM_NAV_PANELS.forEach(p => {
-    const tab = document.getElementById('tab-' + p);
-    if (tab) tab.classList.remove('active');
-  });
-  // Show target panel
-  const panel = document.getElementById('panel-' + name);
-  if (panel) panel.classList.add('active');
-  // Activate bottom nav tab if it exists
-  const tab = document.getElementById('tab-' + name);
-  if (tab) tab.classList.add('active');
-  window.scrollTo(0, 0);
-};
+// Navigation handled by goTo() function above
 
-// Also wire up the questionnaire result to go to account-create
-// Update the result screen proceed button
-document.addEventListener('DOMContentLoaded', function() {
-  // Nothing needed — buttons use onclick directly
-});
-
+</script>
 </body>
 </html>
